@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock title %}
+
+{% block content %}
+<div class="flex items-center justify-center w-full px-4 py-10">
+  
+  <div class="w-full max-w-xl p-8 sm:p-12 space-y-10 bg-emerald-100 rounded-3xl shadow-2xl border border-emerald-200">
+    
+    <div class="text-center space-y-2">
+        <h2 class="text-3xl font-bold text-emerald-900">{{ user.first_name  | title}}'s Profile</h2>
+        <p class="text-emerald-700 text-sm">Account created on {{ user.created_at|date:"F d, Y" }}</p>
+    </div>
+
+    <form action="" method="POST" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-semibold text-emerald-800 opacity-70">First Name</label>
+                <input type="text" value="{{ user.first_name | title }}" class="font-serif block w-full mt-1 bg-emerald-50 border-emerald-200 text-emerald-600 rounded-lg shadow-sm p-3 cursor-not-allowed" disabled>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-emerald-800 opacity-70">Last Name</label>
+                <input type="text" value="{{ user.last_name | title }}" class="font-serif block w-full mt-1 bg-emerald-50 border-emerald-200 text-emerald-600 rounded-lg shadow-sm p-3 cursor-not-allowed" disabled>
+            </div>
+        </div>
+
+        <div>
+            <label for="id_email" class="block text-sm font-bold text-emerald-900">Email Address</label>
+            <input type="email" name="email" id="id_email" 
+                value="{{ form.email.value|default:user.email }}" 
+                class="font-serif block w-full mt-1 border-emerald-400 ring-2 ring-emerald-500/10 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+            <p class="text-[10px] text-rose-600 font-bold uppercase mt-1">Note: Changing email will deactivate your account.</p>
+        </div>
+
+        <div>
+            <label class="block text-sm font-semibold text-emerald-800 opacity-70">Company Name</label>
+            <input type="text" value="{{ user.company_name | title }}" class="font-serif block w-full mt-1 bg-emerald-50 border-emerald-200 text-emerald-600 rounded-lg shadow-sm p-3 cursor-not-allowed" disabled>
+        </div>
+
+        <div class="relative">
+           <label for="id_phone" class="block text-sm font-bold text-emerald-900">Phone Number</label>
+            <input type="text" name="phone" id="id_phone" 
+                value="{{ form.phone.value|default:user.phone }}" 
+                class="font-serif block w-full mt-1 border-emerald-400 ring-2 ring-emerald-500/10 rounded-lg shadow-sm p-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+        </div>
+
+        <div class="pt-4">                
+            <button type="submit" class="w-full mt-4 px-4 py-4 text-lg font-bold text-white bg-rose-500 rounded-xl hover:bg-rose-600 shadow-lg transform hover:scale-[1.01] transition-all">
+                Save
+            </button>
+        </div>
+    </form>
+
+    <div class="flex flex-col sm:flex-row justify-between items-center pt-6 space-y-4 sm:space-y-0 w-full border-t border-gray-300">
+        <a href="{% url 'password_change' %}" class="text-md font-medium text-emerald-700 hover:text-emerald-900 hover:underline">
+            Change Password?
+        </a>
+        <a href="{% url 'customer_dashboard' %}" class="text-md font-medium text-emerald-700 hover:text-emerald-900 hover:underline">
+            ← Back to Dashboard
+        </a>
+    </div>
+  </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Home{% endblock title %}
+{% block content %}
+<div class="flex flex-grow items-center justify-center p-6">
+    <img src="{% static 'images/official_special_lowres.gif' %}" alt="Home Image" class="max-w-full h-auto max-h-[70vh] object-contain rounded-xl shadow-2xl transition-all duration-500 ease-in-out">
+</div>
+{% endblock content %}
