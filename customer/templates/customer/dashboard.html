@@ -1,6 +1,28 @@
 {% extends 'base.html' %}
 {% block title %}Customer Dashboard{% endblock title %}
+
 {% block content %}
-<h1 class="text-center mt-6 font-bold">Customer Dashboard</h1>
-<a href="{% url 'password_change' %}" class="bg-rose-400 p-4 m-6">Change Password</a>
+<div class="flex flex-row gap-6 w-full items-start">
+    <aside class="w-72 h-full flex border border-slate-200 rounded-xl shadow-sm bg-white overflow-hidden">
+        <nav class="flex flex-col gap-1 p-2">
+            <a href="{% url 'customer_order' %}" class="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-slate-100 hover:text-blue-gray-900 focus:bg-slate-100 active:bg-slate-200">
+                <div class="grid mr-4 place-items-center">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </div>
+                <span>Start Order</span>
+            </a>
+
+            <a class="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-slate-100 hover:text-blue-gray-900 focus:bg-slate-100 active:bg-slate-200">
+                <div class="grid mr-4 place-items-center">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <span>History</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm p-10 h-full mr-10">
+        
+    </main>
+</div>
 {% endblock content %}

@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Customer Dashboard{% endblock title %}
+{% block content %}
+
+<div class="w-full bg-slate-50 max-h-[1055px] py-7 border border-slate-200 rounded-xl">
+    <form method="POST" action="" class="mx-auto px-4 sm:px-6 lg:px-8">
+        {% csrf_token %}
+        
+        <div class="items-center justify-center flex flex-row lg:flex-row gap-6">
+
+            <main class="flex-1 flex flex-col max-w-6xl bg-white border border-slate-200 rounded-xl shadow-sm p-6 md:p-10 overflow-y-auto slim-scroll max-h-[1000px]">
+                
+                {% comment %} Combined Container for Finishes and Size {% endcomment %}
+                <div class="w-full max-w-6xl">
+                    <div class="flex flex-col md:flex-row gap-6 mb-5">
+
+                        <div class="flex-1">
+                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Name</h1>
+                            <div class="relative group">
+                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
+                                    <div class="relative w-full">
+                                        <input type="{{orderName.type}}" id="{{orderName.id}}" name="{{orderName.name}}" required class="bg-neutral-secondary-medium border border-default-medium rounded-2xl text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="TailDown No 1" required />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex-1">
+                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Choose Quantity</h1>
+                            <div class="relative group">
+                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
+                                    <div class="relative w-full">
+                                        <input type="{{orderQuantity.type}}" id="{{orderQuantity.id}}" name="{{orderQuantity.name}}" value=1 min=1 max=25  required class="bg-neutral-secondary-medium border border-default-medium rounded-2xl text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="25" required />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% comment %} Select Show {% endcomment %}
+                        <div class="flex-1">
+                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Select Show</h1>
+                            <div class="relative group">
+                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
+                                    <div class="relative w-full">
+                                        <select id="{{ showName.id }}" name="{{ showName.name }}" required class="block w-full bg-slate-50 appearance-none border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
+                                            <option value="" disabled selected>Choose option</option>
+                                            {% for job in showName.options %}
+                                                <option value="{{ job.key }}"> {{ job.value }} </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% comment %} Select Cable Finishes {% endcomment %}
+                        <div class="flex-1">
+                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Select Cable Finishes</h1>
+                            <div class="relative group">
+                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
+                                    <div class="relative w-full">
+                                        <select id="{{ cableFinishes.id }}" name="{{ cableFinishes.name }}" required class="block w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
+                                            <option value="" disabled selected>Choose option</option>
+                                            {% for option in cableFinishes.options %}
+                                                <option value="{{ option.key }}">{{ option.value }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% comment %} Select Cable Size {% endcomment %}
+                        <div class="flex-1">
+                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Select Cable Size</h1>
+                            <div class="relative group">
+                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
+                                    <div class="relative w-full">
+                                        <select id="{{ cableSize.id }}" name="{{ cableSize.name }}" required class="block w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
+                                            <option value="" disabled selected>Choose option</option>
+                                            {% for option in cableSize.options %}
+                                                <option value="{{ option.key }}">{{ option.value }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                {% comment %} Top {% endcomment %}
+                <div class="w-full max-w-3xl">
+                    <h1 class="font-bold mb-4 text-slate-800">Select Top</h1>
+                    <div class="flex flex-col md:flex-row gap-6 mb-5">
+                        {% comment %} Top duplicate {% endcomment %}
+                        {% for data in top %}
+                            <div class="flex-1">
+                                <div class="relative group">
+                                    {% comment %} <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md"> {% endcomment %}
+                                        <div class="relative w-full">
+                                            <label class="relative cursor-pointer group">
+                                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" required class="peer sr-only">
+                                                    <div class="aspect-square flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all peer-checked:border-green-500 peer-checked:bg-green-50/50 peer-checked:shadow-sm group-hover:border-slate-200">
+                                                        <div class="flex-1 flex items-center justify-center w-full overflow-hidden">
+                                                            <img class="max-h-full max-w-full object-contain" src="{% static data.image %}" alt="{{ data.value }}"/>
+                                                        </div>
+                                                        <h3 class="text-lg font-bold text-center mt-2 text-slate-700">{{ data.value }}</h3>
+                                                    </div>
+                                            </label>
+                                        </div>
+                                    {% comment %} </div> {% endcomment %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                </div>
+
+                {% comment %}  end {% endcomment %}
+                <div class="w-full max-w-3xl">
+                    <h1 class="font-bold mb-4 text-slate-800">Select End</h1>
+                    <div class="flex flex-col md:flex-row gap-6 mb-5">
+                        {% for data in end %}
+                            <div class="flex-1">
+                                <div class="relative group">
+                                    {% comment %} <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md"> {% endcomment %}
+                                        <div class="relative w-full">
+                                            <label class="relative cursor-pointer group">
+                                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" required class="peer sr-only">
+                                                    <div class="aspect-square flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all peer-checked:border-green-500 peer-checked:bg-green-50/50 peer-checked:shadow-sm group-hover:border-slate-200">
+                                                        <div class="flex-1 flex items-center justify-center w-full overflow-hidden">
+                                                            <img class="max-h-full max-w-full object-contain" src="{% static data.image %}" alt="{{ data.value }}"/>
+                                                        </div>
+                                                        <h3 class="text-lg font-bold text-center mt-2 text-slate-700">{{ data.value }}</h3>
+                                                    </div>
+                                            </label>
+                                        </div>
+                                    {% comment %} </div> {% endcomment %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% comment %} Select Turnbuckle and Chain {% endcomment %}
+                <div class="w-full max-w-3xl">
+                    <h1 class="font-bold mb-4 text-slate-800">Select Turnbuckle and Chain</h1>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {% for data in chkTC %}
+                            <label class="relative cursor-pointer group">
+                                <input type="checkbox" name="{{ data.name }}" id="{{ data.name }}" value="{{ data.value }}" class="peer sr-only">
+                                <div class="aspect-square flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all 
+                                            peer-checked:border-green-500 peer-checked:bg-green-50/50 peer-checked:shadow-sm
+                                            group-hover:border-slate-200">
+                                    <div class="flex-1 flex items-center justify-center w-full overflow-hidden">
+                                        <img class="max-h-full max-w-full object-contain" src="{% static data.image %}" alt="{{ data.value }}"/>
+                                    </div>
+                                    <h3 class="text-lg font-bold text-center mt-2 text-slate-700">{{ data.value }}</h3>
+                                </div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% comment %} Combined Container for Order and Size {% endcomment %}
+                <div class="w-full max-w-3xl">
+                    <div class="flex flex-col md:flex-row gap-6 mb-10">
+
+                        {% comment %} Select Order of Turnbuckle and Chain {% endcomment %}
+                        <div class="flex-1">
+                            <h2 class="font-bold mb-4 mt-6 text-slate-800 p-2">Select Order of Turnbuckle/Chain</h2>
+                            <div class="relative group h-full">
+                                <div class="w-full min-h-[120px] flex flex-col items-center justify-center p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
+                                    <label for="{{ orderTC.id }}" class="w-full mb-3 text-sm font-semibold text-slate-600">
+                                        Configuration Type
+                                    </label>
+                                    <div class="relative w-full">
+                                        <select id="{{ orderTC.id }}" name="{{ orderTC.name }}" required class="block w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
+                                            <option value="" disabled selected>Choose option</option>
+                                            {% for option in orderTC.options %}
+                                                <option value="{{ option.key }}">{{ option.value }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% comment %} Select Turnbuckle Size {% endcomment %}
+                        <div class="flex-1">
+                            <h2 class="font-bold mb-4 mt-6 text-slate-800 p-2">Select Turnbuckle Size</h2>
+                            <div class="relative group h-full">
+                                <div class="w-full min-h-[120px] flex flex-col items-center justify-center p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
+                                    <label class="w-full mb-3 text-sm font-semibold text-slate-600">
+                                        Size Specification
+                                    </label>
+                                    <div class="relative w-full">
+                                        <select id="{{ tbSize.id }}" name="{{ tbSize.name }}" required class="block w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
+                                            <option value="" disabled selected>Choose option</option>
+                                            {% for option in tbSize.options %}
+                                                <option value="{{ option.key }}">{{ option.value }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </main>
+
+            <aside class="w-full lg:w-1/4">
+                <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6 sticky top-6">
+                    <h3 class="font-bold text-slate-800 mb-4 border-b pb-2">Order Summary</h3>
+                    <div class="space-y-4"> 
+                        <div class="h-[600px] lg:h-[827px] bg-slate-50 rounded-lg border border-dashed border-slate-200 p-4 overflow-y-auto slim-scroll">
+                            <p class="text-xs text-slate-400 text-center italic">Selection preview will appear here</p>
+                        </div>
+                    </div> 
+
+                    <button type="submit" class="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-100">
+                        Confirm Selection
+                    </button>
+                </div>
+            </aside>
+
+        </div>
+    </form>
+</div>
+
+{% endblock content %}

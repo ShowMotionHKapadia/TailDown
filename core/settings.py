@@ -144,12 +144,12 @@ SITE_DOMAIN = 'http://127.0.0.1:8000/'
 SITE_NAME = 'ShowMotion Inc.'
 
 # Mail Trap Email Configuration
-EMAIL_BACKEND = env('EMAIL_BACKEND')
-EMAIL_HOST = env('EMAIL_HOST')
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-EMAIL_PORT = env('EMAIL_PORT')
-EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS')
+EMAIL_BACKEND = env('EBACKEND')
+EMAIL_HOST = env('EHOST')
+EMAIL_HOST_USER = env('EHOSTUSER')
+EMAIL_HOST_PASSWORD = env('EHOSTPASSWORD')
+EMAIL_PORT = env('EPORT')
+EMAIL_USE_TLS = env.bool('EUSETLS')
 
 # When user click on logout button below will be used to redirect user to login page
 LOGIN_REDIRECT_URL = 'customer_dashboard'

@@ -64,7 +64,7 @@ class User(AbstractBaseUser):
 class JobDetails(models.Model):
     jobId = models.AutoField(primary_key=True)
     jobNo = models.CharField(max_length=100, default='100')
-    showName = models.CharField(max_length=255)
+    showName = models.CharField(max_length=255,unique=True, verbose_name=("Show Name"))
     customer = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 

@@ -1,37 +1,143 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <style>
-    /* Push the 'X' button further to the right */
-    .toastify .toast-close {
-      position: absolute !important;
-      top: 5px !important;    /* Distance from top */
-      right: 8px !important;  /* Distance from right */
-      font-size: 14px !important; /* Smaller size */
-      opacity: 0.5;           /* Makes it look subtle */
-      padding: 0 !important;
-      line-height: 1;
-    }
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    /* Ensure the text doesn't hit the button */
-    .toastify {
-      padding-top: 14px !important; 
-      padding-right: 30px !important;
-    }
-  </style>
+    <style>
+      /* Push the 'X' button further to the right */
+      .toastify .toast-close {
+        position: absolute !important;
+        top: 5px !important;    /* Distance from top */
+        right: 8px !important;  /* Distance from right */
+        font-size: 14px !important; /* Smaller size */
+        opacity: 0.5;           /* Makes it look subtle */
+        padding: 0 !important;
+        line-height: 1;
+      }
 
-  <!-- CSS -->
-  <link rel="stylesheet" type="text/css" href="{% static 'css/toastify.min.css' %}">
+      /* Ensure the text doesn't hit the button */
+      .toastify {
+        padding-top: 14px !important; 
+        padding-right: 30px !important;
+      }
+
+      /* Firefox */
+      .slim-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent; /* Thumb color and track color */
+      }
+      /* Chrome, Edge, and Safari */
+      .slim-scroll::-webkit-scrollbar {
+        width: 3px; /* Width of the entire scrollbar */
+      }
+      .slim-scroll::-webkit-scrollbar-track {
+        background: transparent; /* Color of the tracking area */
+      }
+      .slim-scroll::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1; /* Color of the scroll thumb */
+        border-radius: 20px;       /* Roundness of the thumb */
+        border: transparent;       /* Creates padding around thumb */
+      }
+      .slim-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: #94a3b8; /* Darker grey on hover */
+      }
+
+    </style>
+
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="{% static 'css/toastify.min.css' %}">
+    <title>{% block title %}{% endblock title %}</title>
+
+  </head>
+
+  <body class="font-serif flex flex-col min-h-screen min-w-screen">
+    <!-- Header Section -->
+    <header>
+      <nav class="bg-gradient-to-b from-emerald-800 to-emerald-300 shadow-lg sticky top-0 z-50 text-white">
+        <div class="--max-width flex flex-wrap items-center justify-between mx-auto p-4"> <!--max-w-screen-xl--> 
+          <a href="{% url 'home' %}" class="flex items-center space-x-3 rtl:space-x-reverse">
+              <span class="ml-10 self-center text-2xl font-semibold whitespace-nowrap">ShowMotion Inc.</span>
+          </a>
+          <div class="mr-10 hidden w-full md:block md:w-auto" id="navbar-default">
+            <ul class="font-medium flex flex-row space-x-8">
+              <li>
+                <a href="{% url 'home' %}" class="block py-2 px-3" aria-current="page">Home</a>
+              </li>
+            {% if user.is_authenticated %}
+              <li class="relative group flex items-center">
+                <button type="button" class="flex text-sm bg-emerald-700 rounded-full focus:ring-4 focus:ring-emerald-200 transition-all" id="user-menu-button">
+                  <span class="sr-only">Open user menu</span>
+                  <div class="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-800 font-bold border-2 border-white shadow-sm hover:bg-white hover:text-emerald-600 transition-colors">
+                    {{ user.first_name|slice:":1"| upper }}{{ user.last_name|slice:":1"| upper }}
+                  </div>
+                </button>
+
+                <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl py-2 py-1 text-gray-700 hidden group-hover:block z-50 animate-in fade-in zoom-in duration-150">
+                  <div class="px-4 py-3 border-b border-gray-100">
+                    <p class="text-sm font-semibold text-gray-900 leading-none mb-1">{{ user.first_name | title  }} {{ user.last_name | title  }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+                  </div>
+                  
+                  <a href="{% url 'customer_dashboard' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Dashboard</a>
+                  <a href="{% url 'view_profile' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">View Profile</a>
+                  
+                  <div class="border-t border-gray-100 mt-1">
+                    <form method="post" action="{% url 'logout' %}" class="block w-full">
+                      {% csrf_token %}
+                      <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                        Sign out
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </li>
+              
+              {% else %}
+              <li>
+                <a href="{% url 'register' %}" class="block py-2 px-3">Register</a>
+              </li>
+              <li>
+                <a href="{% url 'login' %}" class="block py-2 px-3">Sign In</a>
+              </li>
+            {% endif %}            
+            </ul>
+          </div>
+        </div>
+      </nav>
+    
+    </header>
+
+    <main class="m-10 flex-grow flex flex-row text-black p-4">
+      {% block content %}{% endblock content %}
+      
+    </main> 
+  </body>
+
+  <!-- Toastify messages from Django -->
+  <div id="django-messages" style="display: none;">
+    {% for message in messages %}
+        <div class="message-data" 
+             data-text="{{ message }}" 
+             data-tag="{{ message.tags }}">
+        </div>
+    {% endfor %}
+  </div>
+
+  <footer class="bg-gradient-to-t from-emerald-800 to-emerald-300 shadow-lg sticky top-0 z-50 text-white py-6 text-center">
+    <p>&copy; 2026 ShowMotion Inc. All rights reserved.</p>
+  </footer>
 
   <!-- JavaScript -->
   <script type="text/javascript" src="{% static 'js/jquery-4.0.0.min.js' %}"></script>
@@ -46,90 +152,5 @@
             window.location.reload();
         }
     }); 
-</script>
-
-  <title>{% block title %}{% endblock title %}</title>
-</head>
-<body class="font-serif flex flex-col min-h-screen">
-
-  <!-- Header Section -->
-  <header>
-    <nav class="bg-gradient-to-b from-emerald-800 to-emerald-300 shadow-lg sticky top-0 z-50 text-white">
-      <div class="--max-width flex flex-wrap items-center justify-between mx-auto p-4"> <!--max-w-screen-xl--> 
-        <a href="{% url 'home' %}" class="flex items-center space-x-3 rtl:space-x-reverse">
-            <span class="ml-10 self-center text-2xl font-semibold whitespace-nowrap">ShowMotion Inc.</span>
-        </a>
-        <div class="mr-10 hidden w-full md:block md:w-auto" id="navbar-default">
-          <ul class="font-medium flex flex-row space-x-8">
-            <li>
-              <a href="{% url 'home' %}" class="block py-2 px-3" aria-current="page">Home</a>
-            </li>
-           {% if user.is_authenticated %}
-            <!-- Logout Button -->
-            <!-- <li>
-              <form method="post" action="{% url 'logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="px-3 py-2 text-white rounded-lg hover:bg-red-500">Logout</button>
-              </form>
-            </li> -->
-            <li class="relative group flex items-center">
-              <button type="button" class="flex text-sm bg-emerald-700 rounded-full focus:ring-4 focus:ring-emerald-200 transition-all" id="user-menu-button">
-                <span class="sr-only">Open user menu</span>
-                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-800 font-bold border-2 border-white shadow-sm hover:bg-white hover:text-emerald-600 transition-colors">
-                  {{ user.first_name|slice:":1"| upper }}{{ user.last_name|slice:":1"| upper }}
-                </div>
-              </button>
-
-              <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl py-2 py-1 text-gray-700 hidden group-hover:block z-50 animate-in fade-in zoom-in duration-150">
-                <div class="px-4 py-3 border-b border-gray-100">
-                  <p class="text-sm font-semibold text-gray-900 leading-none mb-1">{{ user.first_name | title  }} {{ user.last_name | title  }}</p>
-                  <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
-                </div>
-                
-                <a href="{% url 'customer_dashboard' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Dashboard</a>
-                <a href="{% url 'view_profile' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">View Profile</a>
-                
-                <div class="border-t border-gray-100 mt-1">
-                  <form method="post" action="{% url 'logout' %}" class="block w-full">
-                    {% csrf_token %}
-                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                      Sign out
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </li>
-            
-            {% else %}
-            <li>
-              <a href="{% url 'register' %}" class="block py-2 px-3">Register</a>
-            </li>
-            <li>
-              <a href="{% url 'login' %}" class="block py-2 px-3">Sign In</a>
-            </li>
-           {% endif %}            
-          </ul>
-        </div>
-      </div>
-    </nav>
-   
-  </header>
-
-  <main class="flex-grow flex flex-col items-center justify-center text-black p-4">
-    {% block content %}{% endblock content %}
-    <div id="django-messages" style="display: none;">
-      {% for message in messages %}
-          <span class="message-data" 
-                data-text="{{ message }}" 
-                data-tag="{{ message.tags }}">
-          </span>
-      {% endfor %}
-    </div>
-  </main> 
-
-  <footer class="bg-gradient-to-t from-emerald-800 to-emerald-300 shadow-lg sticky top-0 z-50 text-white py-6 text-center">
-    <p>&copy; 2026 ShowMotion Inc. All rights reserved.</p>
-  </footer>
-
-</body>
+  </script>
 </html>
