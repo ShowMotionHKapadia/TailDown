@@ -367,6 +367,22 @@ $(document).ready(function() {
         handleHardwareLogic();
     });
 
+    //Spinner 
+    $('form').on('submit', function(e) {
+        // Show the spinner
+        $('#loading-overlay').removeClass('hidden').addClass('flex');
+    });
+
+    $(window).on('pageshow', function() {
+        $('#loading-overlay').addClass('hidden');
+    });
+
+    //Force the browser forward when 'back' is clicked
+    window.history.pushState(null, null, window.location.href);
+    $(window).on('popstate', function() {
+        window.history.go(1);
+    });
+
     //Run both once on page load to reflect any server-side pre-filled values
     updateSummary();
     handleHardwareLogic();

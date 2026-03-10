@@ -14,7 +14,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.views.decorators.cache import never_cache 
 from django.contrib.auth.decorators import login_required  
 
-
+@never_cache
 def home(request):
     return render(request, 'account/home.html')
 

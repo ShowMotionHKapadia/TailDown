@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.cache import never_cache
+from django.utils.decorators import method_decorator 
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.db import transaction
@@ -13,9 +15,11 @@ from account.models import JobDetails
 from customer.models import TailDownCart, TailDownOrder
 from .forms import TailDownCartForm
 
+@never_cache
 def access_denied(request):
     return render(request, 'customer/access_denied.html')
 
+@never_cache
 @login_required
 @csrf_protect
 def customer_order_view(request):
@@ -110,6 +114,7 @@ def customer_order_view(request):
 
     return render(request, 'customer/order.html', context=context)
 
+@never_cache
 @login_required
 @csrf_protect
 def customer_order_cart(request):
@@ -160,7 +165,9 @@ def customer_order_cart(request):
             }
     return render(request, 'customer/cart.html', context=context)
 
+decorators = [never_cache, login_required, csrf_protect]
 
+@method_decorator(decorators, name='dispatch')
 class CustomerDashboardView(LoginRequiredMixin, ListView):
     model = TailDownOrder
     template_name = 'customer/dashboard.html'
@@ -182,7 +189,7 @@ class CustomerDashboardView(LoginRequiredMixin, ListView):
         context['all_jobs'] = JobDetails.objects.all()
         return context
 
-
+@never_cache
 @login_required
 @require_POST  # Only POST allowed, blocks accidental GET deletions.
 @csrf_protect
@@ -199,6 +206,7 @@ def delete_cart_item(request, order_id):
         'message': 'Item removed from cart.'
     })
 
+@never_cache
 @login_required
 @csrf_protect
 def password_change_view(request):
