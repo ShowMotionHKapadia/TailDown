@@ -1,8 +1,8 @@
 from django import forms
-from .models import TailDownOrder
+from .models import TailDownCart
 from account.models import JobDetails
 
-class TailDownOrderForm(forms.ModelForm):
+class TailDownCartForm(forms.ModelForm):
 
     #Custom field to select a show by its jobId, sourced from JobDetails model
     showName = forms.ModelChoiceField(
@@ -16,7 +16,7 @@ class TailDownOrderForm(forms.ModelForm):
     turnbuckleSize = forms.CharField(required=False)
 
     class Meta:
-        model = TailDownOrder
+        model = TailDownCart
         #Ensure these names match your Model's field names exactly
         fields = [
             'orderName','quantity',

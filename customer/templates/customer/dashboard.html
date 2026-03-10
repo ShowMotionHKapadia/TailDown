@@ -2,27 +2,181 @@
 {% block title %}Customer Dashboard{% endblock title %}
 
 {% block content %}
-<div class="flex flex-row gap-6 w-full items-start">
-    <aside class="w-72 h-full flex border border-slate-200 rounded-xl shadow-sm bg-white overflow-hidden">
-        <nav class="flex flex-col gap-1 p-2">
+{% comment %} <div class="flex flex-row gap-6 w-full items-start">
+    <aside class="w-72 h-1/7 flex border border-slate-200 rounded-xl shadow-sm bg-white overflow-hidden">
+        <nav class="flex flex-col w-full justify-items-center gap-1 p-2">
             <a href="{% url 'customer_order' %}" class="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-slate-100 hover:text-blue-gray-900 focus:bg-slate-100 active:bg-slate-200">
                 <div class="grid mr-4 place-items-center">
-                    <i class="fa-solid fa-cart-shopping"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-6 h-6 fill-black hover:fill-emerald-600 transition-colors"><path d="M24 48C10.7 48 0 58.7 0 72C0 85.3 10.7 96 24 96L69.3 96C73.2 96 76.5 98.8 77.2 102.6L129.3 388.9C135.5 423.1 165.3 448 200.1 448L456 448C469.3 448 480 437.3 480 424C480 410.7 469.3 400 456 400L200.1 400C188.5 400 178.6 391.7 176.5 380.3L171.4 352L475 352C505.8 352 532.2 330.1 537.9 299.8L568.9 133.9C572.6 114.2 557.5 96 537.4 96L124.7 96L124.3 94C119.5 67.4 96.3 48 69.2 48L24 48zM208 576C234.5 576 256 554.5 256 528C256 501.5 234.5 480 208 480C181.5 480 160 501.5 160 528C160 554.5 181.5 576 208 576zM432 576C458.5 576 480 554.5 480 528C480 501.5 458.5 480 432 480C405.5 480 384 501.5 384 528C384 554.5 405.5 576 432 576z"/></svg>
                 </div>
                 <span>Start Order</span>
             </a>
 
             <a class="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-slate-100 hover:text-blue-gray-900 focus:bg-slate-100 active:bg-slate-200">
                 <div class="grid mr-4 place-items-center">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-6 h-6 fill-black hover:fill-emerald-600 transition-colors"><path d="M320 128C426 128 512 214 512 320C512 426 426 512 320 512C254.8 512 197.1 479.5 162.4 429.7C152.3 415.2 132.3 411.7 117.8 421.8C103.3 431.9 99.8 451.9 109.9 466.4C156.1 532.6 233 576 320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C234.3 64 158.5 106.1 112 170.7L112 144C112 126.3 97.7 112 80 112C62.3 112 48 126.3 48 144L48 256C48 273.7 62.3 288 80 288L104.6 288C105.1 288 105.6 288 106.1 288L192.1 288C209.8 288 224.1 273.7 224.1 256C224.1 238.3 209.8 224 192.1 224L153.8 224C186.9 166.6 249 128 320 128zM344 216C344 202.7 333.3 192 320 192C306.7 192 296 202.7 296 216L296 320C296 326.4 298.5 332.5 303 337L375 409C384.4 418.4 399.6 418.4 408.9 409C418.2 399.6 418.3 384.4 408.9 375.1L343.9 310.1L343.9 216z"/></svg>
                 </div>
                 <span>History</span>
             </a>
         </nav>
     </aside>
 
-    <main class="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm p-10 h-full mr-10">
-        
+    <main class="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[600px]">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-slate-800">Order History</h2>
+            <span class="text-xs text-slate-400">{{ orders|length }} total records</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
+                        <th class="px-6 py-4 font-semibold">Order ID</th>
+                        <th class="px-6 py-4 font-semibold">Name</th>
+                        <th class="px-6 py-4 font-semibold">Show</th>
+                        <th class="px-6 py-4 font-semibold text-center">Qty</th>
+                        <th class="px-6 py-4 font-semibold text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for order in orders %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-xs font-mono text-slate-400">#{{ order.orderId|stringformat:".8s" }}</td>
+                        <td class="px-6 py-4">
+                            <p class="text-sm font-semibold text-slate-800">{{ order.orderName }}</p>
+                            <p class="text-[10px] text-slate-400">{{ order.cableSize }} | {{ order.cableFinishes }}</p>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600">{{ order.showName.showName }}</td>
+                        <td class="px-6 py-4 text-sm text-center font-medium">{{ order.quantity }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase 
+                                {% if order.status == 'Placed' %} bg-emerald-100 text-emerald-700
+                                {% elif order.status == 'Draft' %} bg-amber-100 text-amber-700
+                                {% else %} bg-slate-100 text-slate-600 {% endif %}">
+                                {{ order.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-20 text-center">
+                            <p class="text-slate-400 text-sm">No orders found in your history.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </main>
+</div> {% endcomment %}
+
+<div class="flex flex-row gap-6 w-full items-start">
+    <aside class="w-72 flex flex-col border border-slate-200 rounded-xl shadow-sm bg-white overflow-hidden">
+        <nav class="flex flex-col w-full p-2 gap-1">
+            <a href="{% url 'customer_order' %}" class="flex items-center w-full p-3 leading-tight transition-all rounded-lg hover:bg-slate-100">
+                <div class="grid mr-4 place-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-6 h-6 fill-black"><path d="M24 48C10.7 48 0 58.7 0 72C0 85.3 10.7 96 24 96L69.3 96C73.2 96 76.5 98.8 77.2 102.6L129.3 388.9C135.5 423.1 165.3 448 200.1 448L456 448C469.3 448 480 437.3 480 424C480 410.7 469.3 400 456 400L200.1 400C188.5 400 178.6 391.7 176.5 380.3L171.4 352L475 352C505.8 352 532.2 330.1 537.9 299.8L568.9 133.9C572.6 114.2 557.5 96 537.4 96L124.7 96L124.3 94C119.5 67.4 96.3 48 69.2 48L24 48zM208 576C234.5 576 256 554.5 256 528C256 501.5 234.5 480 208 480C181.5 480 160 501.5 160 528C160 554.5 181.5 576 208 576zM432 576C458.5 576 480 554.5 480 528C480 501.5 458.5 480 432 480C405.5 480 384 501.5 384 528C384 554.5 405.5 576 432 576z"/></svg>
+                </div>
+                <span>Start Order</span>
+            </a>
+
+            <a href="{% url 'customer_dashboard' %}" class="flex items-center w-full p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <div class="grid mr-4 place-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-6 h-6 fill-emerald-600"><path d="M320 128C426 128 512 214 512 320C512 426 426 512 320 512C254.8 512 197.1 479.5 162.4 429.7C152.3 415.2 132.3 411.7 117.8 421.8C103.3 431.9 99.8 451.9 109.9 466.4C156.1 532.6 233 576 320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C234.3 64 158.5 106.1 112 170.7L112 144C112 126.3 97.7 112 80 112C62.3 112 48 126.3 48 144L48 256C48 273.7 62.3 288 80 288L104.6 288C105.1 288 105.6 288 106.1 288L192.1 288C209.8 288 224.1 273.7 224.1 256C224.1 238.3 209.8 224 192.1 224L153.8 224C186.9 166.6 249 128 320 128zM344 216C344 202.7 333.3 192 320 192C306.7 192 296 202.7 296 216L296 320C296 326.4 298.5 332.5 303 337L375 409C384.4 418.4 399.6 418.4 408.9 409C418.2 399.6 418.3 384.4 408.9 375.1L343.9 310.1L343.9 216z"/></svg>
+                </div>
+                <span class="font-bold text-emerald-700">History</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-100 space-y-4">
+            <div>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">Filter by Show</p>
+                <select onchange="location.href='?show=' + this.value" class="w-full text-xs border-slate-200 rounded-lg focus:ring-emerald-500">
+                    <option value="">All Shows</option>
+                    {% for job in all_jobs %}
+                        <option value="{{ job.jobId }}" {% if request.GET.show == job.jobId|stringformat:"s" %}selected{% endif %}>{{ job.showName }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <div class="flex flex-col gap-1">
+                    <a href="{% url 'customer_dashboard' %}" class="text-[12px] text-red-400 mt-2 hover:underline">Clear Filter</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[600px]">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-slate-800">Order History</h2>
+            <span class="text-xs text-slate-400">{{ orders|length }} total records</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
+                        <th class="px-6 py-4 font-semibold">Order ID</th>
+                        <th class="px-6 py-4 font-semibold">Name (Click for details)</th>
+                        <th class="px-6 py-4 font-semibold">Show</th>
+                        <th class="px-6 py-4 font-semibold text-center">Qty</th>
+                        <th class="px-6 py-4 font-semibold text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for order in orders %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-xs font-mono text-slate-400">#{{ order.orderId|stringformat:".8s" }}</td>
+                        <td class="px-6 py-4">
+                            <button type="button" 
+                                onclick="openDetailModal('{{ order.orderName }}', '{{ order.cableSize }}', '{{ order.cableFinishes }}', '{{ order.topType }}', '{{ order.endType }}', '{{ order.tcOrder }}', '{{ order.turnbuckleSize }}')" 
+                                class="text-sm font-semibold text-slate-800 hover:text-emerald-600 transition-colors text-left underline decoration-dotted">
+                                {{ order.orderName }}
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600">{{ order.showName.showName }}</td>
+                        <td class="px-6 py-4 text-sm text-center font-medium">{{ order.quantity }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase 
+                                {% if order.status == 'Placed' %} bg-emerald-100 text-emerald-700
+                                {% elif order.status == 'Draft' %} bg-amber-100 text-amber-700
+                                {% else %} bg-slate-100 text-slate-600 {% endif %}">
+                                {{ order.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-20 text-center">
+                            <p class="text-slate-400 text-sm">No orders found.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<div id="detailModal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 overflow-hidden">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
+            <h3 id="m_name" class="text-xl font-bold text-slate-800">Order Details</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+            <div><p class="text-slate-400 uppercase text-[10px] font-bold">Cable Size</p><p id="m_size" class="font-medium text-slate-700"></p></div>
+            <div><p class="text-slate-400 uppercase text-[10px] font-bold">Finish</p><p id="m_finish" class="font-medium text-slate-700"></p></div>
+            <div><p class="text-slate-400 uppercase text-[10px] font-bold">Top Type</p><p id="m_top" class="font-medium text-slate-700"></p></div>
+            <div><p class="text-slate-400 uppercase text-[10px] font-bold">End Type</p><p id="m_end" class="font-medium text-slate-700"></p></div>
+            <div><p class="text-slate-400 uppercase text-[10px] font-bold">Hardware Order</p><p id="m_tc" class="font-medium text-slate-700"></p></div>
+            <div><p class="text-slate-400 uppercase text-[10px] font-bold">TB Size</p><p id="m_tbsize" class="font-medium text-slate-700"></p></div>
+        </div>
+
+        <button onclick="closeModal()" class="w-full mt-8 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all">Close Window</button>
+    </div>
 </div>
 {% endblock content %}

@@ -72,46 +72,64 @@
           </a>
           <div class="mr-10 hidden w-full md:block md:w-auto" id="navbar-default">
             <ul class="font-medium flex flex-row space-x-8">
-              <li>
-                <a href="{% url 'home' %}" class="block py-2 px-3" aria-current="page">Home</a>
-              </li>
-            {% if user.is_authenticated %}
-              <li class="relative group flex items-center">
-                <button type="button" class="flex text-sm bg-emerald-700 rounded-full focus:ring-4 focus:ring-emerald-200 transition-all" id="user-menu-button">
-                  <span class="sr-only">Open user menu</span>
-                  <div class="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-800 font-bold border-2 border-white shadow-sm hover:bg-white hover:text-emerald-600 transition-colors">
-                    {{ user.first_name|slice:":1"| upper }}{{ user.last_name|slice:":1"| upper }}
-                  </div>
-                </button>
-
-                <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl py-2 py-1 text-gray-700 hidden group-hover:block z-50 animate-in fade-in zoom-in duration-150">
-                  <div class="px-4 py-3 border-b border-gray-100">
-                    <p class="text-sm font-semibold text-gray-900 leading-none mb-1">{{ user.first_name | title  }} {{ user.last_name | title  }}</p>
-                    <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
-                  </div>
-                  
-                  <a href="{% url 'customer_dashboard' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Dashboard</a>
-                  <a href="{% url 'view_profile' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">View Profile</a>
-                  
-                  <div class="border-t border-gray-100 mt-1">
-                    <form method="post" action="{% url 'logout' %}" class="block w-full">
-                      {% csrf_token %}
-                      <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                        Sign out
-                      </button>
-                    </form>
-                  </div>
-                </div>
+              <li class="flex flex-row items-center space-x-4 overflow-visible">
+                  <a href="{% url 'home' %}" class="block py-2 px-3" aria-current="page">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-6 h-6 fill-white hover:fill-emerald-300 transition-colors">
+                          <path d="M304 70.1C313.1 61.9 326.9 61.9 336 70.1L568 278.1C577.9 286.9 578.7 302.1 569.8 312C560.9 321.9 545.8 322.7 535.9 313.8L527.9 306.6L527.9 511.9C527.9 547.2 499.2 575.9 463.9 575.9L175.9 575.9C140.6 575.9 111.9 547.2 111.9 511.9L111.9 306.6L103.9 313.8C94 322.6 78.9 321.8 70 312C61.1 302.2 62 287 71.8 278.1L304 70.1zM320 120.2L160 263.7L160 512C160 520.8 167.2 528 176 528L224 528L224 424C224 384.2 256.2 352 296 352L344 352C383.8 352 416 384.2 416 424L416 528L464 528C472.8 528 480 520.8 480 512L480 263.7L320 120.3zM272 528L368 528L368 424C368 410.7 357.3 400 344 400L296 400C282.7 400 272 410.7 272 424L272 528z"/>
+                      </svg>
+                  </a>
+                  {% if user.is_authenticated %}
+                    <a href="{% url 'customer_order_cart' %}" class="block py-2 px-3 relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-7 h-7 fill-white hover:fill-emerald-200 transition-colors">
+                            <path d="M24 48C10.7 48 0 58.7 0 72C0 85.3 10.7 96 24 96L69.3 96C73.2 96 76.5 98.8 77.2 102.6L129.3 388.9C135.5 423.1 165.3 448 200.1 448L456 448C469.3 448 480 437.3 480 424C480 410.7 469.3 400 456 400L200.1 400C188.5 400 178.6 391.7 176.5 380.3L171.4 352L475 352C505.8 352 532.2 330.1 537.9 299.8L568.9 133.9C572.6 114.2 557.5 96 537.4 96L124.7 96L124.3 94C119.5 67.4 96.3 48 69.2 48L24 48zM208 576C234.5 576 256 554.5 256 528C256 501.5 234.5 480 208 480C181.5 480 160 501.5 160 528C160 554.5 181.5 576 208 576zM432 576C458.5 576 480 554.5 480 528C480 501.5 458.5 480 432 480C405.5 480 384 501.5 384 528C384 554.5 405.5 576 432 576z"/>
+                        </svg>
+                        {% if user.is_authenticated and order_count > 0 %}
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1 leading-none z-50"
+                                  style="font-size: 11px;">
+                                {{ order_count }}
+                            </span>
+                        {% endif %}
+                    </a>
+                  {% endif %}
               </li>
               
-              {% else %}
-              <li>
-                <a href="{% url 'register' %}" class="block py-2 px-3">Register</a>
-              </li>
-              <li>
-                <a href="{% url 'login' %}" class="block py-2 px-3">Sign In</a>
-              </li>
-            {% endif %}            
+              {% if user.is_authenticated %}
+                <li class="relative group flex items-center">
+                  <button type="button" class="flex text-sm bg-emerald-700 rounded-full focus:ring-4 focus:ring-emerald-300 transition-all" id="user-menu-button">
+                    <span class="sr-only">Open user menu</span>
+                    <div class="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-800 font-bold border-2 border-white shadow-sm hover:bg-white hover:text-emerald-600 transition-colors">
+                      {{ user.first_name|slice:":1"| upper }}{{ user.last_name|slice:":1"| upper }}
+                    </div>
+                  </button>
+
+                  <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl py-2 py-1 text-gray-700 hidden group-hover:block z-50 animate-in fade-in zoom-in duration-150">
+                    <div class="px-4 py-3 border-b border-gray-100">
+                      <p class="text-sm font-semibold text-gray-900 leading-none mb-1">{{ user.first_name | title  }} {{ user.last_name | title  }}</p>
+                      <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+                    </div>
+                    
+                    <a href="{% url 'customer_dashboard' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Dashboard</a>
+                    <a href="{% url 'view_profile' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">View Profile</a>
+                    
+                    <div class="border-t border-gray-100 mt-1">
+                      <form method="post" action="{% url 'logout' %}" class="block w-full">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                          Sign out
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </li>
+                
+                {% else %}
+                <li>
+                  <a href="{% url 'register' %}" class="block py-2 px-3">Register</a>
+                </li>
+                <li>
+                  <a href="{% url 'login' %}" class="block py-2 px-3">Sign In</a>
+                </li>
+              {% endif %}            
             </ul>
           </div>
         </div>
@@ -133,6 +151,13 @@
              data-tag="{{ message.tags }}">
         </div>
     {% endfor %}
+  </div>
+
+  <div id="contentLoader" class="hidden absolute inset-0 flex items-center justify-center bg-white/80 rounded-2xl z-10">
+    <div class="flex flex-col items-center gap-2 text-emerald-600">
+      <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
+      <span class="text-xs">Loading...</span>
+    </div>
   </div>
 
   <footer class="bg-gradient-to-t from-emerald-800 to-emerald-300 shadow-lg sticky top-0 z-50 text-white py-6 text-center">

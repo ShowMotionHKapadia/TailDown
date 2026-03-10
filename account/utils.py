@@ -16,7 +16,7 @@ class SendEmailThread(threading.Thread):
 
 def send_activation_email(recipient_email, activation_url):
     subject = "Activate your account on " + settings.SITE_NAME
-    from_email = 'no_reply@demomailtrap.com'
+    from_email = 'no_reply@demomailtrap.co'
     to_email = [recipient_email]
 
     # Load the HTML template
@@ -31,7 +31,7 @@ def send_activation_email(recipient_email, activation_url):
 
 def send_reset_password_email(recipient_email, reset_url):
     subject = 'Reset Your Password on '+settings.SITE_NAME
-    from_email = 'no_reply@demomailtrap.com'
+    from_email = 'no_reply@demomailtrap.co'
     to_email = [recipient_email]
 
     # Load the HTML template

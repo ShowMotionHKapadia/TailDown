@@ -19,22 +19,19 @@ def home(request):
     return render(request, 'account/home.html')
 
 @never_cache
-def login_view(request):
-    if request.user.is_authenticated:    
-        if request.user.is_customer:
-            return redirect('customer_dashboard')
-        return redirect('home')
-    
+def login_view(request):    
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
 
-        if not email or not password:
-            messages.error(request, "Both fields are required.")
-            return redirect('login')
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            messages.error(request, "Invalid email or password.")
+            return redirect('login')
+
+        # 2. Check the password manually
+        if not user.check_password(password):
             messages.error(request, "Invalid email or password.")
             return redirect('login')
 
@@ -42,6 +39,12 @@ def login_view(request):
             messages.error(
                 request, "Your account is inactive. Please activate your account."
             )
+            # uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            # token = default_token_generator.make_token(user)
+            # activation_link = reverse(
+            #     'activate', kwargs={'uidb64': uidb64, 'token': token})
+            # activation_url = f'{settings.SITE_DOMAIN}{activation_link}'
+            # send_activation_email(user.email, activation_url)
             return redirect('login')
 
         user = authenticate(request, email=email, password=password)
@@ -61,7 +64,6 @@ def login_view(request):
             return redirect('login')
 
     return render(request, 'account/login.html')
-
 
 def register_view(request):
     if request.method == "POST":

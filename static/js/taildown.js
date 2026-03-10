@@ -12,7 +12,7 @@ function showNotification(msg, type) {
 
     Toastify({
         text: msg,
-        duration: 30000,
+        duration: 3000,
         close: true,    
         gravity: "bottom",
         position: "right",
@@ -35,6 +35,45 @@ function showNotification(msg, type) {
     }).showToast();
 }
 
+//Get Cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      document.cookie.split(';').forEach(cookie => {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        }
+      });
+    }
+    return cookieValue;
+}
+
+
+// REUSABLE AJAX DELETE
+// Usage: ajaxDelete(url, onSuccess, onError)
+// Automatically attaches CSRF token to every request.
+function ajaxDelete(url, onSuccess, onError) {
+    $.ajax({
+        url: url,
+        type: 'POST',           // POST (not DELETE) — works with Django's @require_POST + CSRF
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),   // CSRF token from cookie
+            'X-Requested-With': 'XMLHttpRequest'     // Marks request as AJAX on Django's side
+        },
+        success: function(response) {
+        if (response.status === 'success') {
+            onSuccess(response);
+        } else {
+            onError(response);
+        }
+        },
+        error: function(xhr) {
+        const msg = xhr.status === 403 ? 'Permission denied. You can only delete your own items.' : xhr.status === 404 ? 'Item not found — it may have already been removed.' : 'Something went wrong. Please try again.';
+        onError({ message: msg });
+        }
+    });
+}
 
 //Reads the current value of a text input by its 'name' attribute.
 //Returns a rendered summary row if the field has a value, otherwise returns an empty string.
@@ -115,7 +154,7 @@ function handleHardwareLogic() {
     //Reset all options to hidden first, then reveal only the valid ones
     $orderSelect.find('option').hide(); 
     $orderSelect.find('option[value=""]').show(); //Placeholder
-    $orderSelect.find('option[value="none"]').show(); //Always show "None" by default
+    // $orderSelect.find('option[value="none"]').show(); //Always show "None" by default
 
     if (isTB && !isChain) {
         //Only turnbuckle checked — "Only Turnbuckle" is the sole valid order
@@ -136,12 +175,11 @@ function handleHardwareLogic() {
     } else {
         //Neither checked — force the order to "None" automatically
         $orderSelect.find('option[value="none"]').show();
-        $orderSelect.val('none');
+        // $orderSelect.val('none');
     }
 
     updateSummary();
 }
-
 
 //Rebuilds the Order Summary panel in the aside from the current form field values.
 //Shows a placeholder message if no fields have been filled in yet.
@@ -175,6 +213,141 @@ function updateSummary() {
 
 }
 
+//toggle function for accordina in order
+function toggle(btn) {
+    const content = btn.nextElementSibling;
+    const icon = btn.querySelector('.chevron');  // ← target chevron specifically
+    const isOpen = !content.classList.contains('hidden');
+
+    document.querySelectorAll('.accordion-btn').forEach(b => {
+        b.nextElementSibling.classList.add('hidden');
+        b.querySelector('.chevron').classList.remove('rotate-180');  // ← here too
+    });
+
+    if (!isOpen) {
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+    }
+}
+
+// Internal callback store
+let _pendingDeleteCallback = null;
+
+// Opens the custom modal with the item name and stores the confirm action
+function showDeleteModal(itemName, onConfirm) {
+    _pendingDeleteCallback = onConfirm;
+
+    // Set item name in modal
+    $('#deleteModalItemName').text('"' + itemName + '"');
+
+    // Reset confirm button to default state
+    $('#deleteModalConfirm')
+        .prop('disabled', false)
+        .html(`
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7
+                         m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Remove
+        `);
+
+    // Show modal container
+    $('#deleteModal').removeClass('hidden').addClass('flex');
+
+    // Animate in on next frame
+    requestAnimationFrame(function() {
+        $('#deleteModalBackdrop').css('opacity', '1');
+        $('#deleteModalCard').css({ 'opacity': '1', 'transform': 'scale(1)' });
+    });
+
+    // Focus cancel by default (safer UX)
+    setTimeout(function() { $('#deleteModalCancel').focus(); }, 50);
+}
+
+// Closes the modal with fade-out animation
+function closeDeleteModal() {
+    $('#deleteModalBackdrop').css('opacity', '0');
+    $('#deleteModalCard').css({ 'opacity': '0', 'transform': 'scale(0.95)' });
+
+    setTimeout(function() {
+        $('#deleteModal').removeClass('flex').addClass('hidden');
+        _pendingDeleteCallback = null;
+    }, 200);
+}
+
+// Delete the item from the cart — now uses custom modal instead of window.confirm
+function deleteItem(event, el) {
+    event.stopPropagation();
+
+    const orderId  = el.dataset.orderId;
+    const card     = el.closest('.accordion-item');
+    const itemName = card.querySelector('.font-semibold.text-slate-800').textContent.trim();
+
+    showDeleteModal(itemName, function() {
+
+        // Show loading spinner on confirm button
+        $('#deleteModalConfirm')
+            .prop('disabled', true)
+            .html(`
+                <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                            stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                Removing…
+            `);
+
+        ajaxDelete('/customer/cart/delete/' + orderId + '/',
+
+            function onSuccess(response) {
+                closeDeleteModal();
+                card.remove();
+
+                const remaining = $('.accordion-item').length;
+                if (remaining === 0) {
+                    $('#emptyCartMsgId').removeClass('hidden');
+                    $('#cartCountId').text('0 Items');
+                    $('#btnSubmitId').addClass('hidden');
+                } else {
+                    $('#cartCountId').text(remaining + ' Item' + (remaining !== 1 ? 's' : ''));
+                }
+                showNotification('"' + itemName + '" removed from cart.', 'warning');
+            },
+
+            function onError(response) {
+                closeDeleteModal();
+                showNotification(response.message || 'Could not delete item.', 'error');
+            }
+        );
+    });
+}
+
+// Open order details in model
+function openDetailModal(name, size, finish, top, end, tc, tbsize) {
+    $('#m_name').text(name);
+    $('#m_size').text(size);
+    $('#m_finish').text(finish);
+    $('#m_top').text(top);
+    $('#m_end').text(end);
+    $('#m_tc').text(tc);
+    $('#m_tbsize').text(tbsize || 'N/A');
+    
+    // Using jQuery animations and CSS manipulation
+    $('#detailModal').removeClass('hidden').hide().fadeIn(200).css('display', 'flex');
+    $('body').css('overflow', 'hidden'); 
+}
+
+// Close modal of order details
+function closeModal() {
+    $('#detailModal').fadeOut(200, function() {
+        $(this).addClass('hidden');
+        $('body').css('overflow', 'auto');
+    });
+}
+
+
 //Load logic in DOM
 $(document).ready(function() {
 
@@ -197,4 +370,23 @@ $(document).ready(function() {
     //Run both once on page load to reflect any server-side pre-filled values
     updateSummary();
     handleHardwareLogic();
+
+    // ── Delete Modal Button Handlers ──────────────────────────────────────────
+
+    // Confirm button — run the stored delete callback
+    $('#deleteModalConfirm').on('click', function() {
+        if (_pendingDeleteCallback) {
+            _pendingDeleteCallback();
+        }
+    });
+
+    // Cancel button
+    $('#deleteModalCancel').on('click', function() {
+        closeDeleteModal();
+    });
+
+    // Click outside (backdrop) closes modal
+    $('#deleteModalBackdrop').on('click', function() {
+        closeDeleteModal();
+    });
 });

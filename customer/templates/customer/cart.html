@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Cart{% endblock title %}
+{% block content %}
+
+<div class="w-full bg-gradient-to-br from-slate-50 to-slate-100 flex justify-center py-12 px-4 font-serif border border-slate-200 rounded-xl">
+
+  <form method="POST" action="{% url 'customer_order_cart' %}" class="w-full max-w-4xl">
+    {% csrf_token %}
+
+    <!-- Page Header -->
+    <div class="mb-6">
+        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Order Summary</p>
+        <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-semibold text-slate-800">{{ userName|capfirst }}'s Cart</h1>
+            <span id="cartCountId" class="inline-flex items-center justify-center px-3 h-7 bg-red-500 text-white text-xs font-semibold rounded-full whitespace-nowrap">
+            {{ cartDetails|length }} Items
+            </span>
+        </div>
+    </div>
+
+    <!-- Cart Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+
+      <!-- Scrollable Items — scrolls only when many orders -->
+      <div class="overflow-y-auto max-h-[600px] slim-scroll p-4 space-y-3 max-h-[600px]">
+
+        {% for cart in cartDetails %}
+        <div class="accordion-item border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-200">
+
+          <!-- Header -->
+          <button type="button" onclick="toggle(this)" class="accordion-btn w-full flex items-center justify-between px-4 py-3 text-left bg-white hover:bg-slate-50 transition-colors duration-150">
+            <div class="flex items-center gap-3">
+              <span class="w-7 h-7 flex items-center justify-center bg-slate-100 text-slate-500 text-xs font-semibold rounded-lg flex-shrink-0">
+                {{ forloop.counter }}
+              </span>
+              <div>
+                <p class="font-semibold text-slate-800 text-sm">{{ cart.orderName }}</p>
+                <p class="text-xs text-slate-400 mt-0.5">Qty: {{ cart.quantity }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+
+              <!-- Delete -->
+              <span onclick="deleteItem(event, this)" data-order-id="{{ cart.orderId }}" class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors duration-150 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </span>
+
+              <!-- Chevron -->
+              <span class="w-8 h-8 flex items-center justify-center text-slate-400 bg-slate-100 rounded-lg">
+                <svg class="chevron w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </span>
+            </div>
+          </button>
+
+          <!-- Body -->
+          <div class="hidden border-t border-slate-100 bg-slate-50">
+            <div class="px-4 py-4">
+
+              <!-- 3-column grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-4">
+
+                <div>
+                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Show</p>
+                  <p class="text-sm text-slate-700 font-medium">{{ cart.showName.showName }}</p>
+                </div>
+                <div>
+                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Cable Finishes</p>
+                  <p class="text-sm text-slate-700 font-medium">{{ cart.cableFinishes }}</p>
+                </div>
+                <div>
+                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Cable Size</p>
+                  <p class="text-sm text-slate-700 font-medium">{{ cart.cableSize }}</p>
+                </div>
+                <div>
+                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Top</p>
+                  <p class="text-sm text-slate-700 font-medium">{{ cart.topType }}</p>
+                </div>
+                <div>
+                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">End</p>
+                  <p class="text-sm text-slate-700 font-medium">{{ cart.endType }}</p>
+                </div>
+                <div>
+                  <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Order Of Hardware</p>
+                  <p class="text-sm text-slate-700 font-medium">{{ cart.tcOrder }}</p>
+                </div>
+
+                {% if cart.turnbuckle and cart.chain %}
+                  <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Hardware</p>
+                    <p class="text-sm text-slate-700 font-medium">Turnbuckle & Chain</p>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Turnbuckle Size</p>
+                    <p class="text-sm text-slate-700 font-medium">{{ cart.turnbuckleSize }}</p>
+                  </div>
+                {% elif cart.turnbuckle %}
+                  <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Hardware</p>
+                    <p class="text-sm text-slate-700 font-medium">Turnbuckle</p>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Turnbuckle Size</p>
+                    <p class="text-sm text-slate-700 font-medium">{{ cart.turnbuckleSize }}</p>
+                  </div>
+                {% elif cart.Chain %}
+                  <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Hardware</p>
+                    <p class="text-sm text-slate-700 font-medium">Chain</p>
+                  </div>
+                {% endif %}
+
+              </div>
+
+              <!-- Preview Button -->
+              <div class="mt-4 pt-3 border-t border-slate-200">
+                <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition-colors duration-150">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  Taildown Preview
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+        {% empty %}
+
+        <div id="emptyCartMsgId" class="text-center py-16">
+          <svg class="w-10 h-10 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <p class="text-slate-400 text-sm font-medium">Your cart is empty.</p>
+          <a href="{% url 'customer_order' %}" class="inline-block mt-4 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors">
+            Continue Shopping
+          </a>
+        </div>
+        {% endfor %}
+
+        <div id="emptyCartMsgId" class="hidden text-center py-16">
+          <svg class="w-10 h-10 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <p class="text-slate-400 text-sm font-medium">Your cart is empty.</p>
+          <a href="{% url 'customer_order' %}" class="inline-block mt-4 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors">
+            Continue Shopping
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Place Order Footer -->
+      {% if cartDetails %}
+      <div id="btnSubmitId" class="border-t border-slate-200 px-4 py-4 bg-white">
+        <button type="submit" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-semibold text-sm rounded-xl transition-all duration-150 tracking-wide">
+          Place Order
+        </button>
+      </div>
+      {% endif %}
+
+    </div>
+
+  </form>
+  
+</div>
+
+<!-- DELETE CONFIRMATION MODAL-->
+<div id="deleteModal" class="fixed inset-0 z-[999] hidden items-center justify-center p-4">
+  
+  <!-- Backdrop — blurred dark overlay, click it to cancel -->
+  <div id="deleteModalBackdrop"
+       style="opacity:0; transition: opacity 0.2s ease;"
+       class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm cursor-pointer">
+  </div>
+
+  <!-- Modal Card -->
+  <div id="deleteModalCard"
+       style="opacity:0; transform: scale(0.95); transition: opacity 0.2s ease, transform 0.2s ease;"
+       class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto p-6">
+
+    <!-- Red trash icon -->
+    <div class="flex items-center justify-center w-14 h-14 mx-auto mb-4 bg-red-50 rounded-full border-4 border-red-100">
+      <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7
+                 m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+      </svg>
+    </div>
+
+    <!-- Title -->
+    <h3 class="text-center text-lg font-semibold text-slate-800 mb-1">Remove Item</h3>
+
+    <!-- Body text -->
+    <p class="text-center text-sm text-slate-500 mb-1">
+      Are you sure you want to remove
+    </p>
+    <p id="deleteModalItemName"
+       class="text-center text-sm font-bold text-slate-800 mb-1 px-4 truncate">
+      <!-- Injected by JS -->
+    </p>
+    <p class="text-center text-xs text-red-400 font-medium mb-6">
+      This action cannot be undone.
+    </p>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-3">
+
+      <button id="deleteModalCancel"class="flex-1 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-slate-300">
+        Cancel
+      </button>
+
+      <button id="deleteModalConfirm" class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold active:scale-95 transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-400">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7 m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/> </svg>
+        Remove
+      </button>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock content %}

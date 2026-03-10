@@ -3,16 +3,21 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from .models import TailDownOrder
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.db import transaction
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from account.models import JobDetails
-from .forms import TailDownOrderForm
+from customer.models import TailDownCart, TailDownOrder
+from .forms import TailDownCartForm
 
-@login_required 
-def customer_dashboard_view(request):
-    """Renders the customer dashboard landing page."""
-    return render(request, 'customer/dashboard.html')
+def access_denied(request):
+    return render(request, 'customer/access_denied.html')
 
 @login_required
+@csrf_protect
 def customer_order_view(request):
     """
     Handles the tail-down order form.
@@ -20,12 +25,12 @@ def customer_order_view(request):
     - GET:  renders a blank order form with all dropdown/radio/checkbox options.
     """
     if request.method == "POST":
-        form = TailDownOrderForm(request.POST)
+        form = TailDownCartForm(request.POST)
         if form.is_valid():
             order = form.save(commit=False)
             order.customer = request.user
             order.save()
-            messages.success(request, "Order placed successfully!")
+            messages.success(request, "Order Added to the Cart successfully!")
             return redirect('customer_order')
         else:
             #Surface each field-level validation error as a flash message
@@ -36,7 +41,7 @@ def customer_order_view(request):
                     messages.error(request, f"{field_label}: {error}")
         
     else:
-        form = TailDownOrderForm() # Blank form for a fresh GET request
+        form = TailDownCartForm() # Blank form for a fresh GET request
 
     #Fetch all jobs for the Show Name dropdown
     showNames_qs = JobDetails.objects.all()
@@ -72,22 +77,22 @@ def customer_order_view(request):
 
         #Radio buttons for selecting the top fitting type; each carries an illustration
         "top": [
-            {'type': 'radio', 'name': 'topType', 'value': 'Big', 'image': "images/official_special_lowres.gif"}, 
-            {'type': 'radio', 'name': 'topType', 'value': 'Small', 'image': "images/official_special_lowres.gif"},
+            {'type': 'radio', 'name': 'topType', 'value': 'Big', 'image': "images/Top_2.JPG"}, 
+            {'type': 'radio', 'name': 'topType', 'value': 'Small', 'image': "images/Top.JPG"},
             {'type': 'radio', 'name': 'topType', 'value': 'None',  'image': "images/official_special_lowres.gif"}
         ],
 
         #Radio buttons for selecting the end fitting type
         "end": [
-            {'type': 'radio', 'name': 'endType', 'value': 'Big', 'image': "images/official_special_lowres.gif"}, 
-            {'type': 'radio', 'name': 'endType', 'value': 'Small', 'image': "images/official_special_lowres.gif"},
+            {'type': 'radio', 'name': 'endType', 'value': 'Nico', 'image': "images/Bottom_1.JPG"}, 
+            {'type': 'radio', 'name': 'endType', 'value': 'Crosby', 'image': "images/Bottom_2.JPG"},
             {'type': 'radio', 'name': 'endType', 'value': 'None' ,  'image': "images/official_special_lowres.gif"}
         ],
 
         #Checkboxes for optional hardware add-ons (turnbuckle and/or chain)
         "chkTC": [
-            {'type': 'checkbox', 'name': 'turnbuckle', 'value': 'Turnbuckle', 'image': "images/official_special_lowres.gif"},
-            {'type': 'checkbox', 'name': 'chain', 'value': 'Chain', 'image': "images/official_special_lowres.gif"},
+            {'type': 'checkbox', 'name': 'turnbuckle', 'value': 'Turnbuckle', 'image': "images/Turnbuckle.JPG"},
+            {'type': 'checkbox', 'name': 'chain', 'value': 'Chain', 'image': "images/Chain.JPG"},
         ],
 
         #Dropdown controlling the assembly order of the selected hardware
@@ -106,6 +111,96 @@ def customer_order_view(request):
     return render(request, 'customer/order.html', context=context)
 
 @login_required
+@csrf_protect
+def customer_order_cart(request):
+    if request.method == 'POST':
+        userCartItems = TailDownCart.objects.filter(customer=request.user, isOrdered=False)
+
+        if not userCartItems.exists():
+            return redirect('customer_order_cart')
+        
+        try:
+            with transaction.atomic():
+                for item in userCartItems:
+                    # 1. Create the permanent Order record
+                    TailDownOrder.objects.create(
+                        customer=item.customer,
+                        orderName=item.orderName,
+                        cableFinishes=item.cableFinishes,
+                        cableSize=item.cableSize,
+                        showName=item.showName,
+                        topType=item.topType,
+                        endType=item.endType,
+                        turnbuckle=item.turnbuckle,
+                        chain=item.chain,
+                        tcOrder=item.tcOrder,
+                        turnbuckleSize=item.turnbuckleSize,
+                        quantity=item.quantity,
+                        status="Placed" # Or "Pending"
+                    )
+                    
+                    # 2. Mark the cart item as ordered
+                    item.isOrdered = True
+                    item.save()
+
+                messages.success(request, f"Thank you, {request.user.first_name}! Your order has been placed successfully. "
+                                        "Our team will begin processing it shortly.")
+                return redirect('customer_dashboard')
+
+        except Exception as e:
+            # Handle errors (e.g., database issues)
+            print(f"Error processing order: {e}")
+
+    # GET request logic    
+    userCarts = TailDownCart.objects.filter(customer=request.user, isOrdered=False)
+    userName = request.user.first_name
+    context = {
+            'cartDetails':userCarts,
+            'userName': userName
+            }
+    return render(request, 'customer/cart.html', context=context)
+
+
+class CustomerDashboardView(LoginRequiredMixin, ListView):
+    model = TailDownOrder
+    template_name = 'customer/dashboard.html'
+    context_object_name = 'orders'
+    
+    def get_queryset(self):
+        queryset = TailDownOrder.objects.filter(customer=self.request.user).order_by('-created_at')
+        
+        # 2. Show Name Filter
+        show_filter = self.request.GET.get('show')
+        if show_filter:
+            queryset = queryset.filter(showName__jobId=show_filter)
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pass all jobs to the sidebar for the dropdown filter
+        context['all_jobs'] = JobDetails.objects.all()
+        return context
+
+
+@login_required
+@require_POST  # Only POST allowed, blocks accidental GET deletions.
+@csrf_protect
+def delete_cart_item(request, order_id):
+    """
+    Securely deletes a cart item via AJAX.
+    - Ownership is always verified: users can only delete their own items.
+    - Returns message so the frontend can handle it gracefully.
+    """
+    cart_item = get_object_or_404(TailDownCart, orderId=order_id, customer=request.user)
+    cart_item.delete()  
+    return JsonResponse({
+        'status': 'success',
+        'message': 'Item removed from cart.'
+    })
+
+@login_required
+@csrf_protect
 def password_change_view(request):
     """
     Allows a logged-in user to change their password.
