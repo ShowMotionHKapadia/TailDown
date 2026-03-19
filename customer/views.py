@@ -11,6 +11,9 @@ from django.http import JsonResponse
 from django.db import transaction
 from django.views.generic import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
+
 from account.models import JobDetails
 from customer.models import TailDownCart, TailDownOrder
 from .forms import TailDownCartForm
@@ -22,7 +25,8 @@ def access_denied(request):
 @never_cache
 @login_required
 @csrf_protect
-def customer_order_view(request):
+@permission_required('customer.add_taildowncart', raise_exception=True)
+def customer_order(request):
     """
     Handles the tail-down order form.
     - POST: validates and saves the order, attaching it to the logged-in user.
@@ -117,6 +121,7 @@ def customer_order_view(request):
 @never_cache
 @login_required
 @csrf_protect
+@permission_required('customer.add_taildowncart', raise_exception=True)
 def customer_order_cart(request):
     if request.method == 'POST':
         userCartItems = TailDownCart.objects.filter(customer=request.user, isOrdered=False)
@@ -150,7 +155,7 @@ def customer_order_cart(request):
 
                 messages.success(request, f"Thank you, {request.user.first_name}! Your order has been placed successfully. "
                                         "Our team will begin processing it shortly.")
-                return redirect('customer_dashboard')
+                return redirect('dashboard')
 
         except Exception as e:
             # Handle errors (e.g., database issues)
@@ -166,21 +171,27 @@ def customer_order_cart(request):
     return render(request, 'customer/cart.html', context=context)
 
 decorators = [never_cache, login_required, csrf_protect]
-
 @method_decorator(decorators, name='dispatch')
-class CustomerDashboardView(LoginRequiredMixin, ListView):
+class DashboardView(PermissionRequiredMixin, LoginRequiredMixin, ListView):
     model = TailDownOrder
+    permission_required = 'customer.view_taildownorder'
     template_name = 'customer/dashboard.html'
     context_object_name = 'orders'
     
     def get_queryset(self):
-        queryset = TailDownOrder.objects.filter(customer=self.request.user).order_by('-created_at')
-        
-        # 2. Show Name Filter
+        user = self.request.user
+        # User and superusers see every order in the system with permission.
+        if user.is_superuser or user.has_perm('customer.view_all_taildownorders'):
+            queryset = TailDownOrder.objects.all().order_by('-created_at')
+        else:
+            queryset = TailDownOrder.objects.filter(
+                customer=user
+            ).order_by('-created_at')
+
         show_filter = self.request.GET.get('show')
         if show_filter:
             queryset = queryset.filter(showName__jobId=show_filter)
-            
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -193,6 +204,7 @@ class CustomerDashboardView(LoginRequiredMixin, ListView):
 @login_required
 @require_POST  # Only POST allowed, blocks accidental GET deletions.
 @csrf_protect
+@permission_required('customer.delete_taildowncart', raise_exception=True)
 def delete_cart_item(request, order_id):
     """
     Securely deletes a cart item via AJAX.

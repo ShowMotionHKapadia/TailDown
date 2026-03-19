@@ -154,7 +154,7 @@ EMAIL_PORT = env('EPORT')
 EMAIL_USE_TLS = env.bool('EUSETLS')
 
 # When user click on logout button below will be used to redirect user to login page
-LOGIN_REDIRECT_URL = 'customer_dashboard'
+LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'
 

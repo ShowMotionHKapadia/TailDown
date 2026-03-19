@@ -55,6 +55,12 @@ class TailDownOrder(models.Model):
     def __str__(self):
         #Identifies the order by the customer's username in admin and shell output
         return f"{self.customer.username}"
+    
+    #Permission to view all customer data
+    class Meta:
+        permissions = [
+            ('view_all_taildownorders', 'Can view all customer orders'),
+        ]
 
 
 class TailDownCart(models.Model):

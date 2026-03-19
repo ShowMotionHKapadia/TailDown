@@ -52,13 +52,12 @@ def login_view(request):
         if user is not None:
             login(request, user)
             messages.success(request, f"Welcome back, {request.user.first_name.capitalize()}!")
-            if user.is_customer:
-                return redirect('customer_dashboard')
+            if user.is_authenticated:
+                return redirect('dashboard')
             else:
                 messages.error(
                     request, "You do not have permission to access this area."
                 )
-                return redirect('home')
         else:
             messages.error(request, "Invalid email or password.")
             return redirect('login')
@@ -160,7 +159,7 @@ def password_reset_confirm_view(request, uidb64, token):
                 )
                 return redirect('login')
             else:
-                for field, errors in form.errors.items():
+                for errors in form.errors.items():
                     for error in errors:
                         messages.error(request, error)
         else:

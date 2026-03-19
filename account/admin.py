@@ -9,7 +9,12 @@ class UserModelAdmin(UserAdmin):
     #that reference specific fields on auth.User.
     list_display = ['id','email', 'first_name', 'last_name','company_name','phone','is_staff','is_superuser','is_active', 'is_customer','is_deleted' ,'created_at', 'updated_at']
     list_filter = ['company_name','is_staff', 'is_active', 'is_customer']
-    fieldsets = [("User Cradentials", {'fields': ['email', 'password']}),("Personal Info", {'fields': ['first_name', 'last_name','company_name','phone']}),("Permissions", {'fields': ['is_staff', 'is_active', 'is_customer']})]
+    fieldsets = [
+                 ("User Cradentials", {'fields': ['email', 'password']}),
+                 ("Personal Info", {'fields': ['first_name', 'last_name','company_name','phone']}),
+                 ("Permissions", {'fields': ['is_active', 'is_staff', 'is_customer']}),
+                 ("Groups & Permissions", {'fields': ['groups', 'user_permissions'],'classes': ['collapse'],'description': 'Assign Django groups or direct permissions to this user.'}),
+                ]
     
     # add_fieldsets is not a standard ModelAdmin attribute. UserModelAdmin
     # overrides get_fieldsets to use this attribute when creating a user.
@@ -18,7 +23,7 @@ class UserModelAdmin(UserAdmin):
     
     search_fields = ['email', 'first_name', 'last_name','company_name']
     ordering = ['id']
-    filter_horizontal = []
+    filter_horizontal = ['groups', 'user_permissions']
  
 admin.site.register(User, UserModelAdmin)   
 

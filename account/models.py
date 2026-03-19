@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 
 # Custom user manager 
 class UserManager(BaseUserManager):
@@ -30,7 +30,7 @@ class UserManager(BaseUserManager):
         user.is_customer = True
         user.save(using=self._db)
         
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=255, null=False)
     last_name = models.CharField(max_length=255, null=False)
     company_name = models.CharField(max_length=255, null=False)
@@ -52,13 +52,11 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.email
      
-    #Only superuser has all permissions to access all data
-    def has_perm(self, perm, obj=None):
-        return self.is_superuser  
-      
-    #Does the user have permissions to view the app `app_label`?
-    def has_module_perms(self, app_label):
-        return self.is_superuser 
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
+    def get_short_name(self):
+        return self.first_name
 
 # Model to store Job Details
 class JobDetails(models.Model):
