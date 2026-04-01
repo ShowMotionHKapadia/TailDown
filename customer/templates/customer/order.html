@@ -1,273 +1,288 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Order{% endblock title %}
-{% block content %}
+{% block title %}Order | ShowMotion Inc.{% endblock title %}
 
-<div class="w-full bg-slate-50 max-h-[1055px] py-7 border border-slate-200 rounded-xl">
-    <form method="POST" action="{% url 'customer_order' %}" class="mx-auto px-4 sm:px-6 lg:px-8">
+{% block content %}
+<div class="h-full w-full flex flex-col lg:flex-row gap-6 overflow-y-auto lg:overflow-hidden">
+    <form method="POST" action="{% url 'customer_order' %}" class="flex flex-col lg:flex-row gap-6 lg:h-full w-full">
         {% csrf_token %}
         
-        <div class="items-center justify-center flex flex-row lg:flex-row gap-6">
+        <!-- Main order config panel -->
+        <main class="w-full lg:flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col min-h-0 lg:overflow-hidden">
+            
+            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 shrink-0">
+                <h2 class="text-xl font-bold text-slate-800">Order Configuration</h2>
+            </div>
 
-            <main class="flex-1 flex flex-col max-w-6xl bg-white border border-slate-200 rounded-xl shadow-sm p-6 md:p-10 overflow-y-auto slim-scroll max-h-[1000px]">
+            <div class="flex-1 lg:overflow-y-auto p-6 md:p-10 space-y-12 slim-scroll">
                 
-                {% comment %} Combined Container for Finishes and Size {% endcomment %}
-                <div class="w-full max-w-6xl">
-                    <div class="flex flex-col md:flex-row gap-6 mb-5">
+                <!-- Row 1: Order Name / Deliver By / Quantity -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-8">
+                    
+                    <div class="space-y-3">
+                        <label for="{{orderName.id}}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Order Name</label>
+                        <div class="relative">
+                            <input type="{{orderName.type}}" id="{{orderName.id}}" name="{{orderName.name}}" 
+                                value="TailDown No 1" required 
+                                class="block w-full bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 shadow-sm transition-all hover:border-slate-200" 
+                                placeholder="Enter order name" />
+                        </div>
+                    </div>
 
-                        <div class="flex-1">
-                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Name</h1>
-                            <div class="relative group">
-                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
-                                    <div class="relative w-full">
-                                        <input type="{{orderName.type}}" id="{{orderName.id}}" name="{{orderName.name}}" value="TailDown No 1" required class="bg-neutral-secondary-medium border border-default-medium rounded-2xl text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="TailDown No 1" required />
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="space-y-3">
+                        <label for="{{deliverBy.id}}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Deliver By</label>
+                        <div class="relative">
+                            <input type="{{deliverBy.type}}" id="{{deliverBy.id}}" name="{{deliverBy.name}}" 
+                                value="{{deliverBy.defaultValue}}" min="{{deliverBy.minDate}}" required 
+                                class="block w-full bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 shadow-sm transition-all hover:border-slate-200 cursor-pointer" />
                         </div>
+                    </div>
 
-                        <div class="flex-1">
-                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Choose Quantity</h1>
-                            <div class="relative group">
-                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
-                                    <div class="relative w-full">
-                                        <input type="{{orderQuantity.type}}" id="{{orderQuantity.id}}" name="{{orderQuantity.name}}" value=1 min=1 max=25  required class="bg-neutral-secondary-medium border border-default-medium rounded-2xl text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="25" required />
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="space-y-3">
+                        <label for="{{orderQuantity.id}}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Quantity</label>
+                        <div class="relative">
+                            <input type="{{orderQuantity.type}}" id="{{orderQuantity.id}}" name="{{orderQuantity.name}}" 
+                                value="1" min="1" max="25" required 
+                                class="block w-full bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 shadow-sm transition-all hover:border-slate-200" />
                         </div>
-                        
-                        {% comment %} Select Show {% endcomment %}
-                        <div class="flex-1">
-                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Select Show</h1>
-                            <div class="relative group">
-                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
-                                    <div class="relative w-full">
-                                        <select id="{{ showName.id }}" name="{{ showName.name }}" required class="block w-full bg-slate-50 appearance-none border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
-                                            <option value="" disabled selected>Choose option</option>
-                                            {% for job in showName.options %}
-                                                <option value="{{ job.key }}"> {{ job.value }} </option>
-                                            {% endfor %}
-                                        </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {% comment %} Select Cable Finishes {% endcomment %}
-                        <div class="flex-1">
-                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Select Cable Finishes</h1>
-                            <div class="relative group">
-                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
-                                    <div class="relative w-full">
-                                        <select id="{{ cableFinishes.id }}" name="{{ cableFinishes.name }}" required class="block w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
-                                            <option value="" disabled selected>Choose option</option>
-                                            {% for option in cableFinishes.options %}
-                                                <option value="{{ option.key }}">{{ option.value }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {% comment %} Select Cable Size {% endcomment %}
-                        <div class="flex-1">
-                            <h1 class="font-bold mb-4 text-slate-800 pt-3">Select Cable Size</h1>
-                            <div class="relative group">
-                                <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
-                                    <div class="relative w-full">
-                                        <select id="{{ cableSize.id }}" name="{{ cableSize.name }}" required class="block w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
-                                            <option value="" disabled selected>Choose option</option>
-                                            {% for option in cableSize.options %}
-                                                <option value="{{ option.key }}">{{ option.value }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
-                {% comment %} Top {% endcomment %}
-                <div class="w-full max-w-3xl">
-                    <h1 class="font-bold mb-4 text-slate-800">Select Top</h1>
-                    <div class="flex flex-col md:flex-row gap-6 mb-5">
-                        {% comment %} Top duplicate {% endcomment %}
+                <hr class="border-slate-100" />
+
+                <!-- Row 2: Show / Finishes / Size -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-8">
+                    
+                    <div class="space-y-3">
+                        <label for="{{ showName.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Select Show</label>
+                        <div class="relative">
+                            <select id="{{ showName.id }}" name="{{ showName.name }}" required 
+                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
+                                <option value="" disabled selected>Choose a show</option>
+                                {% for job in showName.options %}
+                                    <option value="{{ job.key }}">{{ job.value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="{{ cableFinishes.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Cable Finishes</label>
+                        <div class="relative">
+                            <select id="{{ cableFinishes.id }}" name="{{ cableFinishes.name }}" required 
+                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
+                                <option value="" disabled selected>Choose finish</option>
+                                {% for option in cableFinishes.options %}
+                                    <option value="{{ option.key }}">{{ option.value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="{{ cableSize.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Cable Size</label>
+                        <div class="relative">
+                            <select id="{{ cableSize.id }}" name="{{ cableSize.name }}" required 
+                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
+                                <option value="" disabled selected>Choose size</option>
+                                {% for option in cableSize.options %}
+                                    <option value="{{ option.key }}">{{ option.value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Measurements -->
+                <div class="bg-slate-50 p-6 md:p-8 rounded-2xl border border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6">Measurements</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-slate-600">Total Cable Length (L)</label>
+                            <div class="flex gap-4">
+                                <div class="flex-1 relative group">
+                                    <input type="{{cableLengthFt.type}}" id="{{cableLengthFt.id}}" name="{{cableLengthFt.name}}" 
+                                        min="0" step="1" value="0" required 
+                                        class="block w-full bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3 pr-10 shadow-sm transition-all hover:border-slate-200" />
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold pointer-events-none">FT</span>
+                                </div>
+                                <div class="flex-1 relative group">
+                                    <input type="{{cableLengthIn.type}}" id="{{ cableLengthIn.id }}" name="{{cableLengthIn.name}}" 
+                                        min="0" step="1" value="0" required 
+                                        class="block w-full bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3 pr-10 shadow-sm transition-all hover:border-slate-200" />
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold pointer-events-none">IN</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+
+                <hr class="border-slate-100 mt-10" />
+
+                <!-- Select Top -->
+                <div class="space-y-6">
+                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Select Top</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
                         {% for data in top %}
-                            <div class="flex-1">
-                                <div class="relative group">
-                                    {% comment %} <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md"> {% endcomment %}
-                                        <div class="relative w-full">
-                                            <label class="relative cursor-pointer group">
-                                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" required class="peer sr-only">
-                                                    <div class="aspect-square flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all peer-checked:border-green-500 peer-checked:bg-green-50/50 peer-checked:shadow-sm group-hover:border-slate-200">
-                                                        <div class="flex-1 flex items-center justify-center w-full overflow-hidden">
-                                                            <img class="max-h-full max-w-full object-contain" src="{% static data.image %}" alt="{{ data.value }}"/>
-                                                        </div>
-                                                        <h3 class="text-lg font-bold text-center mt-2 text-slate-700">{{ data.value }}</h3>
-                                                    </div>
-                                            </label>
-                                        </div>
-                                    {% comment %} </div> {% endcomment %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    
-                </div>
-
-                {% comment %}  end {% endcomment %}
-                <div class="w-full max-w-3xl">
-                    <h1 class="font-bold mb-4 text-slate-800">Select End</h1>
-                    <div class="flex flex-col md:flex-row gap-6 mb-5">
-                        {% for data in end %}
-                            <div class="flex-1">
-                                <div class="relative group">
-                                    {% comment %} <div class="w-full min-h-[100px] flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md"> {% endcomment %}
-                                        <div class="relative w-full">
-                                            <label class="relative cursor-pointer group">
-                                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" required class="peer sr-only">
-                                                    <div class="aspect-square flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all peer-checked:border-green-500 peer-checked:bg-green-50/50 peer-checked:shadow-sm group-hover:border-slate-200">
-                                                        <div class="flex-1 flex items-center justify-center w-full overflow-hidden">
-                                                            <img class="max-h-full max-w-full object-contain" src="{% static data.image %}" alt="{{ data.value }}"/>
-                                                        </div>
-                                                        <h3 class="text-lg font-bold text-center mt-2 text-slate-700">{{ data.value }}</h3>
-                                                    </div>
-                                            </label>
-                                        </div>
-                                    {% comment %} </div> {% endcomment %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                {% comment %} Select Turnbuckle and Chain {% endcomment %}
-                <div class="w-full max-w-3xl">
-                    <h1 class="font-bold mb-4 text-slate-800">Select Turnbuckle and Chain</h1>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {% for data in chkTC %}
                             <label class="relative cursor-pointer group">
-                                <input type="checkbox" name="{{ data.name }}" id="{{ data.name }}" value="{{ data.value }}" class="peer sr-only">
-                                <div class="aspect-square flex flex-col items-center justify-center p-4 border-2 border-slate-100 rounded-2xl bg-white transition-all 
-                                            peer-checked:border-green-500 peer-checked:bg-green-50/50 peer-checked:shadow-sm
-                                            group-hover:border-slate-200">
-                                    <div class="flex-1 flex items-center justify-center w-full overflow-hidden">
-                                        <img class="max-h-full max-w-full object-contain" src="{% static data.image %}" alt="{{ data.value }}"/>
+                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" required class="peer sr-only">
+                                <div class="aspect-square flex flex-col items-center justify-center p-4 md:p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all duration-300 
+                                            peer-checked:border-emerald-500 peer-checked:bg-emerald-50/30 peer-checked:shadow-md peer-checked:shadow-emerald-100/50
+                                            group-hover:border-slate-200 group-hover:shadow-lg group-hover:-translate-y-1">
+                                    <div class="flex-1 flex items-center justify-center w-full overflow-hidden mb-3">
+                                        <img class="max-h-full max-w-full" src="{% static data.image %}" alt="{{ data.value }}"/>
                                     </div>
-                                    <h3 class="text-lg font-bold text-center mt-2 text-slate-700">{{ data.value }}</h3>
+                                    <h4 class="text-xs md:text-sm font-bold text-center text-slate-700 group-hover:text-emerald-700 transition-colors leading-tight">{{ data.value }}</h4>
                                 </div>
                             </label>
                         {% endfor %}
                     </div>
                 </div>
 
-                {% comment %} Combined Container for Order and Size {% endcomment %}
-                <div class="w-full max-w-3xl">
-                    <div class="flex flex-col md:flex-row gap-6 mb-10">
+                <hr class="border-slate-100 mt-10" />
 
-                        {% comment %} Select Order of Turnbuckle and Chain {% endcomment %}
-                        <div class="flex-1">
-                            <h2 class="font-bold mb-4 mt-6 text-slate-800 p-2">Select Order of Turnbuckle/Chain</h2>
-                            <div class="relative group h-full">
-                                <div class="w-full min-h-[120px] flex flex-col items-center justify-center p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
-                                    <label for="{{ orderTC.id }}" class="w-full mb-3 text-sm font-semibold text-slate-600">
-                                        Configuration Type
-                                    </label>
-                                    <div class="relative w-full">
-                                        <select id="{{ orderTC.id }}" name="{{ orderTC.name }}" required class="block w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
-                                            <option value="" disabled selected>Choose option</option>
-                                            {% for option in orderTC.options %}
-                                                <option value="{{ option.key }}">{{ option.value }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                            </svg>
-                                        </div>
+                <!-- Select End -->
+                <div class="space-y-6">
+                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Select End</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
+                        {% for data in end %}
+                            <label class="relative cursor-pointer group">
+                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" required class="peer sr-only">
+                                <div class="aspect-square flex flex-col items-center justify-center p-4 md:p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all duration-300 
+                                            peer-checked:border-emerald-500 peer-checked:bg-emerald-50/30 peer-checked:shadow-md peer-checked:shadow-emerald-100/50
+                                            group-hover:border-slate-200 group-hover:shadow-lg group-hover:-translate-y-1">
+                                    <div class="flex-1 flex items-center justify-center w-full overflow-hidden mb-3">
+                                        <img class="max-h-full max-w-full" src="{% static data.image %}" alt="{{ data.value }}"/>
                                     </div>
+                                    <h4 class="text-xs md:text-sm font-bold text-center text-slate-700 group-hover:text-emerald-700 transition-colors leading-tight">{{ data.value }}</h4>
                                 </div>
-                            </div>
-                        </div>
-
-                        {% comment %} Select Turnbuckle Size {% endcomment %}
-                        <div class="flex-1">
-                            <h2 class="font-bold mb-4 mt-6 text-slate-800 p-2">Select Turnbuckle Size</h2>
-                            <div class="relative group h-full">
-                                <div class="w-full min-h-[120px] flex flex-col items-center justify-center p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all group-hover:border-slate-200 group-hover:shadow-md">
-                                    <label class="w-full mb-3 text-sm font-semibold text-slate-600">
-                                        Size Specification
-                                    </label>
-                                    <div class="relative w-full">
-                                        <select id="{{ tbSize.id }}" name="{{ tbSize.name }}" required class="block w-full appearance-none bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 px-4 py-3 pr-10 shadow-sm transition-all cursor-pointer">
-                                            <option value="" disabled selected>Choose option</option>
-                                            {% for option in tbSize.options %}
-                                                <option value="{{ option.key }}">{{ option.value }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
+                            </label>
+                        {% endfor %}
                     </div>
                 </div>
 
-            </main>
+                <hr class="border-slate-100 mt-10" />
 
-            <aside class="w-full lg:w-1/4">
-                <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6 sticky top-6">
-                    <h3 class="font-bold text-slate-800 mb-4 border-b pb-2">Order Summary</h3>
-                    
-                    <div class="space-y-4"> 
-                        <div class="h-[600px] lg:h-[827px] bg-slate-50 rounded-lg border border-dashed border-slate-200 p-4 overflow-y-auto slim-scroll">
-                            <p class="text-xs text-slate-400 text-center italic">Selection preview will appear here</p>
+                <!-- Select Turnbuckle and Chain -->
+                <div class="space-y-6">
+                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Select Turnbuckle and Chain</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
+                        {% for data in chkTC %}
+                            <label class="relative cursor-pointer group">
+                                <input type="checkbox" name="{{ data.name }}" id="{{ data.name }}" value="{{ data.value }}" class="peer sr-only">
+                                <div class="aspect-square flex flex-col items-center justify-center p-4 md:p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all duration-300 
+                                            peer-checked:border-emerald-500 peer-checked:bg-emerald-50/30 peer-checked:shadow-md peer-checked:shadow-emerald-100/50
+                                            group-hover:border-slate-200 group-hover:shadow-lg group-hover:-translate-y-1">
+                                    <div class="flex-1 flex items-center justify-center w-full overflow-hidden mb-3">
+                                        <img class="max-h-full max-w-full" src="{% static data.image %}" alt="{{ data.value }}"/>
+                                    </div>
+                                    <h4 class="text-xs md:text-sm font-bold text-center text-slate-700 group-hover:text-emerald-700 transition-colors leading-tight">{{ data.value }}</h4>
+                                </div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <hr class="border-slate-100 mt-10" />
+
+                <!-- TC Order / TB Size / Chain Length -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-8">
+                    <div class="space-y-3">
+                        <label for="{{ orderTC.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Order of Turnbuckle/Chain</label>
+                        <div class="relative">
+                            <select id="{{ orderTC.id }}" name="{{ orderTC.name }}" required 
+                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
+                                <option value="" disabled selected>Choose option</option>
+                                {% for option in orderTC.options %}
+                                    <option value="{{ option.key }}">{{ option.value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
                         </div>
-                    </div> 
+                    </div>
 
-                    
+                    <div class="space-y-3">
+                        <label for="{{ tbSize.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Turnbuckle Size</label>
+                        <div class="relative">
+                            <select id="{{ tbSize.id }}" name="{{ tbSize.name }}" required 
+                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
+                                <option value="" disabled selected>Choose size</option>
+                                {% for option in tbSize.options %}
+                                    <option value="{{ option.key }}">{{ option.value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="{{ chainLength.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Chain Length</label>
+                        <div class="relative">
+                            <select id="{{ chainLength.id }}" name="{{ chainLength.name }}" required 
+                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
+                                <option value="" disabled selected>Choose length</option>
+                                {% for option in chainLength.options %}
+                                    <option value="{{ option.key }}">{{ option.value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Single sidebar — stacks below on mobile, pinned side on desktop -->
+        <aside class="w-full lg:w-[360px] xl:w-[420px] shrink-0 lg:h-full">
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-md overflow-hidden flex flex-col w-full lg:h-full">
+                <div class="p-6 border-b border-slate-100 bg-slate-50/50 shrink-0">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-receipt text-emerald-600"></i>
+                        Order Summary
+                    </h3>
+                </div>
+                
+                <div class="p-6 flex-1 flex flex-col min-h-0">
+                    <div class="h-[200px] lg:flex-1 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 p-6 overflow-y-auto slim-scroll flex flex-col items-center min-h-0">
+                        <div class="text-center w-full">
+                            <i class="fa-solid fa-cart-shopping text-slate-200 text-3xl mb-3"></i>
+                            <p class="text-sm text-slate-400 italic">Selection preview will appear here</p>
+                        </div>
+                    </div>
+
                     {% if perms.customer.add_taildownorder %}
-                        <div class="flex flex-row gap-3 mt-6">
-                            <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-100 text-sm text-center">
+                        <div class="grid grid-cols-2 lg:grid-cols-1 gap-3 mt-6 shrink-0">
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 group">
+                                <i class="fa-solid fa-plus group-hover:rotate-90 transition-transform"></i>
                                 Add to Cart
                             </button>
-                            
-                            <a href="{% url 'customer_order_cart' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-100 text-sm text-center flex items-center justify-center">
+                            <a href="{% url 'customer_order_cart' %}" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-slate-200 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-cart-arrow-down"></i>
                                 Go to Cart
                             </a>
                         </div>
                     {% endif %}
-                        
                 </div>
-            </aside>
-
-        </div>
+            </div>
+        </aside>
     </form>
 </div>
-
 {% endblock content %}

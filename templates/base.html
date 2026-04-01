@@ -16,18 +16,16 @@
           crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style>
-      /* Push the 'X' button further to the right */
       .toastify .toast-close {
         position: absolute !important;
-        top: 5px !important;    /* Distance from top */
-        right: 8px !important;  /* Distance from right */
-        font-size: 14px !important; /* Smaller size */
-        opacity: 0.5;           /* Makes it look subtle */
+        top: 5px !important;
+        right: 8px !important;
+        font-size: 14px !important;
+        opacity: 0.5;
         padding: 0 !important;
         line-height: 1;
       }
 
-      /* Ensure the text doesn't hit the button */
       .toastify {
         padding-top: 14px !important; 
         padding-right: 30px !important;
@@ -36,24 +34,52 @@
       /* Firefox */
       .slim-scroll {
         scrollbar-width: thin;
-        scrollbar-color: #cbd5e1 transparent; /* Thumb color and track color */
+        scrollbar-color: #cbd5e1 transparent;
       }
       /* Chrome, Edge, and Safari */
       .slim-scroll::-webkit-scrollbar {
-        width: 3px; /* Width of the entire scrollbar */
+        width: 3px;
       }
       .slim-scroll::-webkit-scrollbar-track {
-        background: transparent; /* Color of the tracking area */
+        background: transparent;
       }
       .slim-scroll::-webkit-scrollbar-thumb {
-        background-color: #cbd5e1; /* Color of the scroll thumb */
-        border-radius: 20px;       /* Roundness of the thumb */
-        border: transparent;       /* Creates padding around thumb */
+        background-color: #cbd5e1;
+        border-radius: 20px;
+        border: 1px solid transparent;
       }
       .slim-scroll::-webkit-scrollbar-thumb:hover {
-        background-color: #94a3b8; /* Darker grey on hover */
+        background-color: #94a3b8;
       }
 
+      /* Normalize date input across browsers */
+      input[type="date"] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        min-height: 46px;
+        line-height: 1.5;
+      }
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.5;
+        padding: 4px;
+        margin-left: 4px;
+      }
+      input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 0.8;
+      }
+      input[type="date"]::-webkit-inner-spin-button,
+      input[type="date"]::-webkit-clear-button {
+        display: none;
+        -webkit-appearance: none;
+      }
+      input[type="date"]::-webkit-datetime-edit {
+        padding: 0;
+      }
+      input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+        padding: 0;
+      }
     </style>
 
     <!-- CSS -->
@@ -62,16 +88,24 @@
 
   </head>
 
-  <body class="font-serif flex flex-col min-h-screen min-w-screen">
+  <body class="font-serif flex flex-col h-screen w-full">
     <!-- Header Section -->
-    <header>
-      <nav class="bg-gradient-to-b from-emerald-800 to-emerald-300 shadow-lg sticky top-0 z-50 text-white">
-        <div class="--max-width flex flex-wrap items-center justify-between mx-auto p-4"> <!--max-w-screen-xl--> 
+    <header class="sticky top-0 z-50">
+      <nav class="bg-gradient-to-b from-emerald-800 to-emerald-300 shadow-lg text-white">
+        <div class="w-full flex flex-wrap items-center justify-between px-4 py-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
           <a href="{% url 'home' %}" class="flex items-center space-x-3 rtl:space-x-reverse">
-              <span class="ml-10 self-center text-2xl font-semibold whitespace-nowrap">ShowMotion Inc.</span>
+              <span class="self-center text-xl sm:text-2xl font-semibold whitespace-nowrap">ShowMotion Inc.</span>
           </a>
-          <div class="mr-10 hidden w-full md:block md:w-auto" id="navbar-default">
-            <ul class="font-medium flex flex-row space-x-8">
+
+          <!-- Mobile menu button -->
+          <button type="button" id="mobile-menu-btn" class="md:hidden inline-flex items-center p-2 rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-300">
+            <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24">
+              <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+            </svg>
+          </button>
+
+          <div class="hidden w-full md:flex md:w-auto md:items-center" id="navbar-default">
+            <ul class="font-medium flex flex-col md:flex-row md:space-x-8 mt-4 md:mt-0">
               <li class="flex flex-row items-center space-x-4 overflow-visible">
                   <a href="{% url 'home' %}" class="block py-2 px-3" aria-current="page">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-6 h-6 fill-white hover:fill-emerald-300 transition-colors">
@@ -98,19 +132,24 @@
                   <button type="button" class="flex text-sm bg-emerald-700 rounded-full focus:ring-4 focus:ring-emerald-300 transition-all" id="user-menu-button">
                     <span class="sr-only">Open user menu</span>
                     <div class="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-800 font-bold border-2 border-white shadow-sm hover:bg-white hover:text-emerald-600 transition-colors">
-                      {{ user.first_name|slice:":1"| upper }}{{ user.last_name|slice:":1"| upper }}
+                      {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
                     </div>
                   </button>
 
-                  <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl py-2 py-1 text-gray-700 hidden group-hover:block z-50 animate-in fade-in zoom-in duration-150">
+                  <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl py-1 text-gray-700 hidden group-hover:block z-50">
                     <div class="px-4 py-3 border-b border-gray-100">
-                      <p class="text-sm font-semibold text-gray-900 leading-none mb-1">{{ user.first_name | title  }} {{ user.last_name | title  }}</p>
+                      <p class="text-sm font-semibold text-gray-900 leading-none mb-1">{{ user.first_name|title }} {{ user.last_name|title }}</p>
                       <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
                     </div>
                     
                     <a href="{% url 'dashboard' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Dashboard</a>
                     <a href="{% url 'view_profile' %}" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">View Profile</a>
                     
+                    {% if user.is_superuser %}
+                      <a href="/DoNotEnter/" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Admin Dashboard</a>
+                      <a href="/DoNotEnter/account/jobdetails/" class="block px-4 py-2 text-sm hover:bg-emerald-50 hover:text-emerald-700 transition-colors">Job Details</a>
+                    {% endif %}
+
                     <div class="border-t border-gray-100 mt-1">
                       <form method="post" action="{% url 'logout' %}" class="block w-full">
                         {% csrf_token %}
@@ -134,58 +173,60 @@
           </div>
         </div>
       </nav>
-    
     </header>
 
-    <main class="m-10 flex-grow flex flex-row text-black p-4">
+    <main class="flex-grow flex flex-col overflow-hidden md:flex-row text-black px-4 py-6 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
       {% block content %}{% endblock content %}
-      
-    </main> 
-  </body>
+    </main>
 
-  <!-- Toastify messages from Django -->
-  <div id="django-messages" style="display: none;">
-    {% for message in messages %}
-        <div class="message-data" 
-             data-text="{{ message }}" 
-             data-tag="{{ message.tags }}">
-        </div>
-    {% endfor %}
-  </div>
-
-  <!-- Put this in base.html -->
-  <div id="loading-overlay" class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
-      <div class="flex flex-col items-center">
-          <!-- Tailwind Spinner -->
-          <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p class="mt-4 text-white font-medium">Processing request...</p>
-      </div>
-  </div>
-
-
-  <div id="contentLoader" class="hidden absolute inset-0 flex items-center justify-center bg-white/80 rounded-2xl z-10">
-    <div class="flex flex-col items-center gap-2 text-emerald-600">
-      <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
-      <span class="text-xs">Loading...</span>
+    <!-- Toastify messages from Django -->
+    <div id="django-messages" style="display: none;">
+      {% for message in messages %}
+          <div class="message-data" 
+               data-text="{{ message }}" 
+               data-tag="{{ message.tags }}">
+          </div>
+      {% endfor %}
     </div>
-  </div>
 
-  <footer class="bg-gradient-to-t from-emerald-800 to-emerald-300 shadow-lg sticky top-0 z-50 text-white py-6 text-center">
-    <p>&copy; 2026 ShowMotion Inc. All rights reserved.</p>
-  </footer>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-white font-medium">Processing request...</p>
+        </div>
+    </div>
 
-  <!-- JavaScript -->
-  <script type="text/javascript" src="{% static 'js/jquery-4.0.0.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/toastify.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/taildown.js' %}"></script>
+    <!-- Content Loader -->
+    <div id="contentLoader" class="hidden absolute inset-0 flex items-center justify-center bg-white/80 rounded-2xl z-10">
+      <div class="flex flex-col items-center gap-2 text-emerald-600">
+        <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
+        <span class="text-xs">Loading...</span>
+      </div>
+    </div>
 
-  <script>
-    // Detect if the page is loaded from the browser's back-forward cache
-    window.addEventListener('pageshow', function(event) {
-        if (event.persisted) {
-            // If true, the page was cached. Force a reload!
-            window.location.reload();
-        }
-    }); 
-  </script>
+    <footer class="bg-gradient-to-t from-emerald-800 to-emerald-300 shadow-lg text-white py-6 text-center">
+      <p class="text-sm sm:text-base">&copy; 2026 ShowMotion Inc. All rights reserved.</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script type="text/javascript" src="{% static 'js/jquery-4.0.0.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/toastify.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/taildown.js' %}"></script>
+
+    <script>
+      // Mobile menu toggle
+      document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+          var menu = document.getElementById('navbar-default');
+          menu.classList.toggle('hidden');
+      });
+
+      // Detect if the page is loaded from the browser's back-forward cache
+      window.addEventListener('pageshow', function(event) {
+          if (event.persisted) {
+              window.location.reload();
+          }
+      }); 
+    </script>
+  </body>
 </html>

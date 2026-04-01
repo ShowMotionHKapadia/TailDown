@@ -17,6 +17,13 @@ class TailDownOrder(models.Model):
     #Human-readable name for the order, pre-filled with a sensible default
     orderName = models.CharField(max_length=255, default="TailDown No 1")
 
+    #Delivery date
+    deliverBy = models.DateField(null=True, blank=True)
+
+    #Cable lenght 
+    cableLengthFt = models.PositiveIntegerField(default=0)
+    cableLengthIn = models.PositiveIntegerField(default=0)
+
     #Finish applied to the cable; restricted to the two choices defined above
     cableFinishes = models.CharField(max_length=10, choices=CABLE_FINISH_CHOICES, verbose_name=("Cable Finishes"))
 
@@ -43,6 +50,9 @@ class TailDownOrder(models.Model):
 
     #Physical size of the turnbuckle (e.g. '1/2"X6"'); only relevant when turnbuckle=True
     turnbuckleSize = models.CharField(max_length=10, verbose_name=("Turnbuckle &Size"))
+
+    #Chain lenght
+    chainLength = models.CharField(max_length=10,blank= " ")
 
     #Number of units ordered; enforced between 1 and 25 at the database and form level
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1),MaxValueValidator(25)]) 
@@ -77,6 +87,13 @@ class TailDownCart(models.Model):
     #Human-readable name for the order, pre-filled with a sensible default
     orderName = models.CharField(max_length=255, default="TailDown No 1")
 
+    #Delivery date
+    deliverBy = models.DateField(null=True, blank=True)
+
+    #Cable length 
+    cableLengthFt = models.PositiveIntegerField(default=0)
+    cableLengthIn = models.PositiveIntegerField(default=0)
+
     #Finish applied to the cable; restricted to the two choices defined above
     cableFinishes = models.CharField(max_length=10, choices=CABLE_FINISH_CHOICES, verbose_name=("Cable Finishes"))
 
@@ -103,6 +120,9 @@ class TailDownCart(models.Model):
 
     #Physical size of the turnbuckle (e.g. '1/2"X6"'); only relevant when turnbuckle=True
     turnbuckleSize = models.CharField(max_length=10, verbose_name=("Turnbuckle &Size"))
+
+    #Chain Lenght
+    chainLength = models.CharField(max_length=10, blank=" ")
 
     #Number of units ordered; enforced between 1 and 25 at the database and form level
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1),MaxValueValidator(25)]) 

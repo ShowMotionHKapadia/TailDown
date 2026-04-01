@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Customer Dashboard{% endblock title %}
 
 {% block content %}
-<div class="flex flex-row gap-6 w-full items-start">
-    <aside class="w-72 flex flex-col border border-slate-200 rounded-xl shadow-sm bg-white overflow-hidden">
+<div class="flex flex-col md:flex-row gap-6 w-full items-start px-4 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
+    <aside class="w-full md:w-72 flex flex-col border border-slate-200 rounded-xl shadow-sm bg-white overflow-hidden shrink-0">
         <nav class="flex flex-col w-full p-2 gap-1">
             
             {% if perms.customer.add_taildownorder %}
@@ -26,51 +27,69 @@
         <div class="p-4 border-t border-slate-100 space-y-4">
             <div>
                 <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">Filter by Show</p>
-                <select onchange="location.href='?show=' + this.value" class="w-full text-xs border-slate-200 rounded-lg focus:ring-emerald-500">
+                <select id="filterShow" class="w-full text-xs border-slate-200 rounded-lg focus:ring-emerald-500">
                     <option value="">All Shows</option>
                     {% for job in all_jobs %}
-                        <option value="{{ job.jobId }}" {% if request.GET.show == job.jobId|stringformat:"s" %}selected{% endif %}>{{ job.showName }}</option>
+                        <option value="{{ job.jobId }}">{{ job.showName }}</option>
                     {% endfor %}
                 </select>
             </div>
 
             <div>
-                <div class="flex flex-col gap-1">
-                    <a href="{% url 'dashboard' %}" class="text-[12px] text-red-400 mt-2 hover:underline">Clear Filter</a>
-                </div>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">Filter by Delivery Date</p>
+                <input type="date" id="filterDate" 
+                    class="w-full text-xs border-slate-200 rounded-lg focus:ring-emerald-500 px-3 py-2" />
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <button type="button" id="btnApplyFilter" 
+                        class="w-full text-xs text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-2 font-semibold transition-colors">
+                    Apply Filters
+                </button>
+                <button type="button" id="btnClearFilter" 
+                        class="text-[12px] text-red-400 mt-2 hover:underline">
+                    Clear Filters
+                </button>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[600px]">
+    <main class="flex-1 w-full bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[600px]">
         <div class="p-6 border-b border-slate-100 flex justify-between items-center">
             <h2 class="text-xl font-semibold text-slate-800">Order History</h2>
             <span class="text-xs text-slate-400">{{ orders|length }} total records</span>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse min-w-[800px] md:min-w-full">
                 <thead>
                     <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
                         <th class="px-6 py-4 font-semibold">Order ID</th>
                         <th class="px-6 py-4 font-semibold">Name (Click for details)</th>
+                        <th class="px-6 py-4 font-semibold">Customer</th>
                         <th class="px-6 py-4 font-semibold">Show</th>
+                        <th class="px-6 py-4 font-semibold">Ordered Date</th>
+                        <th class="px-6 py-4 font-semibold">Deliver By</th>
                         <th class="px-6 py-4 font-semibold text-center">Qty</th>
                         <th class="px-6 py-4 font-semibold text-center">Status</th>
+                        <th class="px-6 py-4 font-semibold text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     {% for order in orders %}
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr data-order-id="{{ order.orderId }}" class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4 text-xs font-mono text-slate-400">#{{ order.orderId|stringformat:".8s" }}</td>
                         <td class="px-6 py-4">
                             <button type="button" 
-                                onclick="openDetailModal('{{ order.orderName }}', '{{ order.cableSize }}', '{{ order.cableFinishes }}', '{{ order.topType }}', '{{ order.endType }}', '{{ order.tcOrder }}', '{{ order.turnbuckleSize }}')" 
+                                onclick="openDetailModal('{{ order.orderId }}')" 
                                 class="text-sm font-semibold text-slate-800 hover:text-emerald-600 transition-colors text-left underline decoration-dotted">
                                 {{ order.orderName }}
                             </button>
                         </td>
+                        <td class="px-6 py-4 text-sm text-slate-600">{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
                         <td class="px-6 py-4 text-sm text-slate-600">{{ order.showName.showName }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600">{{ order.created_at|date:"m/d/Y"|default:"N/A" }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600">{{ order.deliverBy|date:"m/d/Y"|default:"N/A" }}</td>
                         <td class="px-6 py-4 text-sm text-center font-medium">{{ order.quantity }}</td>
                         <td class="px-6 py-4 text-center">
                             <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase 
@@ -80,10 +99,41 @@
                                 {{ order.status }}
                             </span>
                         </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+
+                                {% if can_change %}
+                                    <button type="button"
+                                            onclick="openEditModal('{{ order.orderId }}')"
+                                            class="inline-flex items-center justify-center p-2 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-4 h-4 fill-current">
+                                            <path d="M505 122.9L517.1 135C526.5 144.4 526.5 159.6 517.1 168.9L488 198.1L441.9 152L471 122.9C480.4 113.5 495.6 113.5 504.9 122.9zM273.8 320.2L408 185.9L454.1 232L319.8 366.2C316.9 369.1 313.3 371.2 309.4 372.3L250.9 389L267.6 330.5C268.7 326.6 270.8 323 273.7 320.1zM437.1 89L239.8 286.2C231.1 294.9 224.8 305.6 221.5 317.3L192.9 417.3C190.5 425.7 192.8 434.7 199 440.9C205.2 447.1 214.2 449.4 222.6 447L322.6 418.4C334.4 415 345.1 408.7 353.7 400.1L551 202.9C579.1 174.8 579.1 129.2 551 101.1L538.9 89C510.8 60.9 465.2 60.9 437.1 89zM152 128C103.4 128 64 167.4 64 216L64 488C64 536.6 103.4 576 152 576L424 576C472.6 576 512 536.6 512 488L512 376C512 362.7 501.3 352 488 352C474.7 352 464 362.7 464 376L464 488C464 510.1 446.1 528 424 528L152 528C129.9 528 112 510.1 112 488L112 216C112 193.9 129.9 176 152 176L264 176C277.3 176 288 165.3 288 152C288 138.7 277.3 128 264 128L152 128z"/>
+                                        </svg>
+                                    </button>
+                                {% endif %}
+
+                                {% if can_delete %}
+                                    <button type="button"
+                                            onclick="confirmOrderDelete('{{ order.orderId }}', '{{ order.orderName }}')"
+                                            class="inline-flex items-center justify-center p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-4 h-4 fill-current">
+                                            <path d="M262.2 48C248.9 48 236.9 56.3 232.2 68.8L216 112L120 112C106.7 112 96 122.7 96 136C96 149.3 106.7 160 120 160L520 160C533.3 160 544 149.3 544 136C544 122.7 533.3 112 520 112L424 112L407.8 68.8C403.1 56.3 391.2 48 377.8 48L262.2 48zM128 208L128 512C128 547.3 156.7 576 192 576L448 576C483.3 576 512 547.3 512 512L512 208L464 208L464 512C464 520.8 456.8 528 448 528L192 528C183.2 528 176 520.8 176 512L176 208L128 208zM288 280C288 266.7 277.3 256 264 256C250.7 256 240 266.7 240 280L240 456C240 469.3 250.7 480 264 480C277.3 480 288 469.3 288 456L288 280zM400 280C400 266.7 389.3 256 376 256C362.7 256 352 266.7 352 280L352 456C352 469.3 362.7 480 376 480C389.3 480 400 469.3 400 456L400 280z"/>
+                                        </svg>
+                                    </button>
+                                {% endif %}
+
+                                {% if not can_change and not can_delete %}
+                                    <span class="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-400">
+                                        View Only
+                                    </span>
+                                {% endif %}
+
+                            </div>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="py-20 text-center">
+                        <td colspan="8" class="py-20 text-center">
                             <p class="text-slate-400 text-sm">No orders found.</p>
                         </td>
                     </tr>
@@ -93,25 +143,5 @@
         </div>
     </main>
 </div>
-
-<div id="detailModal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 overflow-hidden">
-        <div class="flex justify-between items-center mb-4 border-b pb-3">
-            <h3 id="m_name" class="text-xl font-bold text-slate-800">Order Details</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">&times;</button>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
-            <div><p class="text-slate-400 uppercase text-[10px] font-bold">Cable Size</p><p id="m_size" class="font-medium text-slate-700"></p></div>
-            <div><p class="text-slate-400 uppercase text-[10px] font-bold">Finish</p><p id="m_finish" class="font-medium text-slate-700"></p></div>
-            <div><p class="text-slate-400 uppercase text-[10px] font-bold">Top Type</p><p id="m_top" class="font-medium text-slate-700"></p></div>
-            <div><p class="text-slate-400 uppercase text-[10px] font-bold">End Type</p><p id="m_end" class="font-medium text-slate-700"></p></div>
-            <div><p class="text-slate-400 uppercase text-[10px] font-bold">Hardware Order</p><p id="m_tc" class="font-medium text-slate-700"></p></div>
-            <div><p class="text-slate-400 uppercase text-[10px] font-bold">TB Size</p><p id="m_tbsize" class="font-medium text-slate-700"></p></div>
-        </div>
-
-        <button onclick="closeModal()" class="w-full mt-8 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all">Close Window</button>
-    </div>
-</div>
+{% include 'customer/model.html' %}
 {% endblock content %}

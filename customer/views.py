@@ -10,18 +10,43 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.db import transaction
 from django.views.generic import ListView
+from django.views.generic.edit import UpdateView
+from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.views import View
+from datetime import date, timedelta
+import holidays
 
 from account.models import JobDetails
 from customer.models import TailDownCart, TailDownOrder
-from .forms import TailDownCartForm
+from .forms import TailDownCartForm, TailDownOrderEditForm
 
+#Access denied page for unauthorise user
 @never_cache
 def access_denied(request):
     return render(request, 'customer/access_denied.html')
 
+#Calcuate delivery date for orders
+def calDeliveryDate():
+    deliveryDate = date.today()
+    usHolidays = holidays.US()
+    businessDaysAdded = 0
+
+    # Loop until we have successfully counted 14 business days
+    while businessDaysAdded < 14:
+        deliveryDate += timedelta(days=1)
+        
+        # Check if the day is a weekend (5=Sat, 6=Sun) OR a holiday
+        if deliveryDate.weekday() < 5 and deliveryDate not in usHolidays:
+            businessDaysAdded += 1
+
+    # Return in YYYY-MM-DD format for your HTML date input
+    return deliveryDate.strftime('%Y-%m-%d')
+
+#Post: Add customer order to cart
+#Get: Provide empty page for order
 @never_cache
 @login_required
 @csrf_protect
@@ -34,10 +59,16 @@ def customer_order(request):
     """
     if request.method == "POST":
         form = TailDownCartForm(request.POST)
+
         if form.is_valid():
             order = form.save(commit=False)
             order.customer = request.user
             order.save()
+
+            warning = getattr(form, 'cable_length_warning', None)
+            if warning:
+                messages.warning(request, warning)
+
             messages.success(request, "Order Added to the Cart successfully!")
             return redirect('customer_order')
         else:
@@ -62,6 +93,13 @@ def customer_order(request):
         #Plain text input for the order name
         "orderName":{'type':'text', 'id':'orderNameId', 'name':'orderName'},
 
+        # Datepicker for tail down delivery 
+        "deliverBy":{'type':'Date', 'id':'deliverById', 'name':'deliverBy', 'defaultValue':calDeliveryDate(), 'minDate': date.today().strftime('%Y-%m-%d') },
+
+        # Cable length 
+        "cableLengthFt": {'type': 'number', 'id': 'cableLengthFtId', 'name': 'cableLengthFt'},
+        "cableLengthIn": {'type': 'number', 'id': 'cableLengthInId', 'name': 'cableLengthIn'},
+
         #Numeric input for how many units to order
         "orderQuantity":{'type':'number', 'id':'orderQuantityId', 'name':'quantity'},
 
@@ -85,22 +123,22 @@ def customer_order(request):
 
         #Radio buttons for selecting the top fitting type; each carries an illustration
         "top": [
-            {'type': 'radio', 'name': 'topType', 'value': 'Big', 'image': "images/Top_2.JPG"}, 
-            {'type': 'radio', 'name': 'topType', 'value': 'Small', 'image': "images/Top.JPG"},
+            {'type': 'radio', 'name': 'topType', 'value': 'Soft Eye', 'image': "images/softEye.JPG"}, 
+            {'type': 'radio', 'name': 'topType', 'value': 'Hard Eye', 'image': "images/hardeye.JPG"},
             {'type': 'radio', 'name': 'topType', 'value': 'None',  'image': "images/official_special_lowres.gif"}
         ],
 
         #Radio buttons for selecting the end fitting type
         "end": [
-            {'type': 'radio', 'name': 'endType', 'value': 'Nico', 'image': "images/Bottom_1.JPG"}, 
-            {'type': 'radio', 'name': 'endType', 'value': 'Crosby', 'image': "images/Bottom_2.JPG"},
+            {'type': 'radio', 'name': 'endType', 'value': 'Nico', 'image': "images/nico.JPG"}, 
+            {'type': 'radio', 'name': 'endType', 'value': 'Crosby', 'image': "images/crosby.JPG"},
             {'type': 'radio', 'name': 'endType', 'value': 'None' ,  'image': "images/official_special_lowres.gif"}
         ],
 
         #Checkboxes for optional hardware add-ons (turnbuckle and/or chain)
         "chkTC": [
-            {'type': 'checkbox', 'name': 'turnbuckle', 'value': 'Turnbuckle', 'image': "images/Turnbuckle.JPG"},
-            {'type': 'checkbox', 'name': 'chain', 'value': 'Chain', 'image': "images/Chain.JPG"},
+            {'type': 'checkbox', 'name': 'turnbuckle', 'value': 'Turnbuckle', 'image': "images/Turnbuckle.svg"},
+            {'type': 'checkbox', 'name': 'chain', 'value': 'Chain', 'image': "images/Chain.svg"},
         ],
 
         #Dropdown controlling the assembly order of the selected hardware
@@ -114,10 +152,16 @@ def customer_order(request):
             'type': 'select', 'id': 'tbSizeId', 'name': 'turnbuckleSize',
             'options': [{'key': '3/8"X6"', 'value': '3/8" X 6"'}, {'key': '1/2"X6"', 'value': '1/2" X 6"'}, {'key': '1/2"X9"', 'value': '1/2" X 9"'}, {'key': '5/8"X6"', 'value': '5/8" X 6"'}, {'key': '5/8"X9"', 'value': '5/8" X 9"'}] 
         },
+
+        "chainLength":{
+            'type': 'select', 'id': 'chainLengthId', 'name': 'chainLength',
+            'options':[{'key': '2ft', 'value': '2 ft'},{'key': '3ft', 'value': '3 ft'},{'key': '4ft', 'value': '4 ft'}]
+        },
     }
 
     return render(request, 'customer/order.html', context=context)
 
+#Post: Store conform order into database 
 @never_cache
 @login_required
 @csrf_protect
@@ -132,12 +176,16 @@ def customer_order_cart(request):
         try:
             with transaction.atomic():
                 for item in userCartItems:
+
                     # 1. Create the permanent Order record
                     TailDownOrder.objects.create(
                         customer=item.customer,
                         orderName=item.orderName,
+                        deliverBy=item.deliverBy,
                         cableFinishes=item.cableFinishes,
                         cableSize=item.cableSize,
+                        cableLengthFt=item.cableLengthFt,
+                        cableLengthIn=item.cableLengthIn,
                         showName=item.showName,
                         topType=item.topType,
                         endType=item.endType,
@@ -145,8 +193,9 @@ def customer_order_cart(request):
                         chain=item.chain,
                         tcOrder=item.tcOrder,
                         turnbuckleSize=item.turnbuckleSize,
+                        chainLength=item.chainLength,
                         quantity=item.quantity,
-                        status="Placed" # Or "Pending"
+                        status="Placed"
                     )
                     
                     # 2. Mark the cart item as ordered
@@ -170,6 +219,7 @@ def customer_order_cart(request):
             }
     return render(request, 'customer/cart.html', context=context)
 
+#Load customer data
 decorators = [never_cache, login_required, csrf_protect]
 @method_decorator(decorators, name='dispatch')
 class DashboardView(PermissionRequiredMixin, LoginRequiredMixin, ListView):
@@ -198,7 +248,172 @@ class DashboardView(PermissionRequiredMixin, LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         # Pass all jobs to the sidebar for the dropdown filter
         context['all_jobs'] = JobDetails.objects.all()
+        context['min_date'] = date.today().strftime('%Y-%m-%d')
+        user = self.request.user
+        context['can_change'] = user.has_perm('customer.change_taildownorder')
+        context['can_delete'] = user.has_perm('customer.delete_taildownorder')
+
         return context
+    
+#return order details  
+@never_cache
+@login_required
+@permission_required('customer.view_taildownorder', raise_exception=True)
+def order_detail_data(request, order_uuid):
+    user = request.user
+    if user.is_superuser or user.has_perm('customer.view_all_taildownorders'):
+        order = get_object_or_404(TailDownOrder, orderId=order_uuid)
+    else:
+        order = get_object_or_404(TailDownOrder, orderId=order_uuid, customer=user)
+    data = {
+        'orderName': order.orderName,
+        'deliverBy': order.deliverBy.strftime('%m/%d/%Y') if order.deliverBy else '',
+        'quantity': order.quantity,
+        'cableSize': order.cableSize,
+        'cableFinishes': order.cableFinishes,
+        'cableLengthFt': order.cableLengthFt,
+        'cableLengthIn': order.cableLengthIn,
+        'topType': order.topType,
+        'endType': order.endType,
+        'tcOrder': order.tcOrder,
+        'turnbuckleSize': order.turnbuckleSize,
+        'chainLength': order.chainLength,
+    }
+    return JsonResponse(data)
+
+#Edit for ordered data save and validate
+@method_decorator(decorators, name='dispatch')
+class OrderEditView(PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
+    model = TailDownOrder
+    form_class = TailDownOrderEditForm
+    permission_required = 'customer.change_taildownorder'
+    slug_field = 'orderId'
+    slug_url_kwarg = 'order_uuid'
+    success_url = reverse_lazy('dashboard')
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or user.has_perm('customer.view_all_taildownorders'):
+            return TailDownOrder.objects.all()
+        return TailDownOrder.objects.filter(customer=user)
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Order "{form.instance.orderName}" updated successfully.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # Collect all errors and show them as flash messages
+        # then redirect back to dashboard instead of rendering a template
+        for field, error_list in form.errors.items():
+            for error in error_list:
+                field_label = form.fields[field].label if field in form.fields else field
+                messages.error(self.request, f'{field_label}: {error}')
+        return redirect('dashboard')
+
+#Get ordered data
+@never_cache
+@login_required
+@permission_required('customer.change_taildownorder', raise_exception=True)
+def order_edit_data(request, order_uuid):
+    user = request.user
+    if user.is_superuser or user.has_perm('customer.view_all_taildownorders'):
+        order = get_object_or_404(TailDownOrder, orderId=order_uuid)
+    else:
+        order = get_object_or_404(TailDownOrder, orderId=order_uuid, customer=user)
+        
+    data = {
+        'orderName': order.orderName,
+        'deliverBy': order.deliverBy.strftime('%Y-%m-%d') if order.deliverBy else '',
+        'quantity': order.quantity,
+        'showName': str(order.showName.jobId),
+        'cableSize': order.cableSize,
+        'cableFinishes': order.cableFinishes,
+        'cableLengthFt': order.cableLengthFt,
+        'cableLengthIn': order.cableLengthIn,
+        'topType': order.topType,
+        'endType': order.endType,
+        'turnbuckle': order.turnbuckle,
+        'chain': order.chain,
+        'tcOrder': order.tcOrder,
+        'turnbuckleSize': order.turnbuckleSize,
+        'chainLength': order.chainLength,
+        'status': order.status,
+    }
+    return JsonResponse(data)
+
+@never_cache
+@login_required
+@csrf_protect
+@permission_required('customer.view_taildownorder', raise_exception=True)
+def filterOrders(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+
+    user = request.user
+    if user.is_superuser or user.has_perm('customer.view_all_taildownorders'):
+        queryset = TailDownOrder.objects.all().order_by('-created_at')
+    else:
+        queryset = TailDownOrder.objects.filter(customer=user).order_by('-created_at')
+
+    import json
+    body = json.loads(request.body)
+    show = body.get('show', '')
+    deliver_by = body.get('deliverBy', '')
+
+    if show:
+        queryset = queryset.filter(showName__jobId=show)
+    if deliver_by:
+        queryset = queryset.filter(deliverBy=deliver_by)
+
+    can_change = user.has_perm('customer.change_taildownorder')
+    can_delete = user.has_perm('customer.delete_taildownorder')
+
+    orders = []
+    for order in queryset:
+        orders.append({
+            'orderId': str(order.orderId),
+            'orderIdShort': str(order.orderId)[:8],
+            'orderName': order.orderName,
+            'customerName': f"{order.customer.first_name} {order.customer.last_name}",
+            'showName': order.showName.showName if order.showName else '',
+            'orderedDate': order.created_at.strftime('%m/%d/%Y') if order.created_at else 'N/A',
+            'deliverBy': order.deliverBy.strftime('%m/%d/%Y') if order.deliverBy else 'N/A',
+            'quantity': order.quantity,
+            'status': order.status,
+        })
+
+    return JsonResponse({
+        'status': 'success',
+        'orders': orders,
+        'count': len(orders),
+        'can_change': can_change,
+        'can_delete': can_delete,
+    })
+
+@method_decorator(decorators, name='dispatch')
+class OrderDeleteView(PermissionRequiredMixin, LoginRequiredMixin, View):
+    permission_required = 'customer.delete_taildownorder'
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or user.has_perm('customer.view_all_taildownorders'):
+            return TailDownOrder.objects.all()
+        return TailDownOrder.objects.filter(customer=user)
+
+    def post(self, request, order_uuid):
+        try:
+            order = self.get_queryset().get(orderId=order_uuid)
+            order_name = order.orderName
+            order.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Order "{order_name}" has been deleted.'
+            })
+        except TailDownOrder.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Order not found.'
+            }, status=404)
 
 @never_cache
 @login_required

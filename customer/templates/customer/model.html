@@ -1,0 +1,359 @@
+{% load static %}
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-4">
+    <div id="deleteModalBackdrop"
+         class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm cursor-pointer opacity-0 transition-opacity duration-200">
+    </div>
+
+    <div id="deleteModalCard" 
+         class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto p-8 opacity-0 scale-95 transition-all duration-200">
+
+        {% if perms.customer.delete_taildowncart %}
+            <div class="flex items-center justify-center w-16 h-16 mx-auto mb-6 bg-red-50 rounded-full border-4 border-red-100 animate-pulse-slow">
+                <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </div>
+        {% endif %}
+        
+        <div class="text-center space-y-2 mb-8">
+            <h3 class="text-xl font-bold text-slate-800">Remove Item?</h3>
+            <div class="space-y-1">
+                <p class="text-sm text-slate-500">Are you sure you want to remove</p>
+                <p id="deleteModalItemName" class="text-sm font-bold text-slate-900 px-4 truncate">
+                    </p>
+            </div>
+            <p class="text-[11px] uppercase tracking-widest text-red-400 font-bold pt-2">
+                This action cannot be undone
+            </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button id="deleteModalCancel" 
+                    class="flex-1 order-2 sm:order-1 py-3 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-slate-300">
+                Cancel
+            </button>
+
+            {% if perms.customer.delete_taildowncart %}
+                <button id="deleteModalConfirm" 
+                        class="flex-1 order-1 sm:order-2 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold active:scale-95 transition-all duration-150 flex items-center justify-center gap-2 shadow-lg shadow-red-100 focus:outline-none focus:ring-2 focus:ring-red-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7 m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Confirm
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="detailModal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div>
+    
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col transition-all duration-200">
+        
+        <div class="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50/50">
+            <div class="space-y-1">
+                <p class="text-[10px] uppercase tracking-widest font-bold text-emerald-600">Order Information</p>
+                <h3 id="m_name" class="text-xl font-bold text-slate-800 leading-tight">Order Details</h3>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors text-2xl leading-none">&times;</button>
+        </div>
+        
+        <div class="p-6 space-y-6 overflow-y-auto max-h-[70vh] slim-scroll">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <p class="text-slate-400 uppercase text-[10px] font-bold tracking-tight">Deliver By</p>
+                    <p id="m_deliverBy" class="text-sm font-semibold text-slate-700"></p>
+                </div>
+                <div class="space-y-1 text-right sm:text-left">
+                    <p class="text-slate-400 uppercase text-[10px] font-bold tracking-tight">Quantity</p>
+                    <p id="m_quantity" class="text-sm font-semibold text-slate-700"></p>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3 border-b border-slate-200 pb-2">Cable Specifications</p>
+                <div class="grid grid-cols-2 gap-y-4 gap-x-2">
+                    <div class="space-y-0.5">
+                        <p class="text-slate-400 text-[10px] font-medium">Size</p>
+                        <p id="m_size" class="text-sm font-semibold text-slate-800"></p>
+                    </div>
+                    <div class="space-y-0.5">
+                        <p class="text-slate-400 text-[10px] font-medium">Finish</p>
+                        <p id="m_finish" class="text-sm font-semibold text-slate-800"></p>
+                    </div>
+                    <div class="space-y-0.5">
+                        <p class="text-slate-400 text-[10px] font-medium">Total Length</p>
+                        <p id="m_cableLength" class="text-sm font-semibold text-slate-800"></p>
+                    </div>
+                    <div class="space-y-0.5">
+                        <p class="text-slate-400 text-[10px] font-medium">Top / End</p>
+                        <p class="text-sm font-semibold text-slate-800"><span id="m_top"></span> / <span id="m_end"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4 px-1">
+                <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 border-b border-slate-100 pb-2">Hardware & Components</p>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="flex justify-between items-center bg-white border border-slate-100 p-3 rounded-lg shadow-sm">
+                        <p class="text-slate-500 text-xs font-medium">Hardware Order</p>
+                        <p id="m_tc" class="text-sm font-bold text-slate-800"></p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white border border-slate-100 p-3 rounded-lg shadow-sm">
+                            <p class="text-slate-500 text-[10px] font-medium mb-1">TB Size</p>
+                            <p id="m_tbsize" class="text-sm font-bold text-slate-800"></p>
+                        </div>
+                        <div class="bg-white border border-slate-100 p-3 rounded-lg shadow-sm">
+                            <p class="text-slate-500 text-[10px] font-medium mb-1">Chain Length</p>
+                            <p id="m_chainLength" class="text-sm font-bold text-slate-800"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-slate-100 shrink-0 bg-white">
+            <button onclick="closeModal()" class="w-full py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 active:scale-[0.98] transition-all shadow-lg shadow-slate-200">
+                Close View
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+        
+        <div class="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
+            <h3 class="text-xl font-bold text-slate-800">Edit Order</h3>
+            <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+        </div>
+
+        <form id="editForm" method="POST" action="" class="flex-1 overflow-y-auto slim-scroll p-6 space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Order Name</label>
+                    <input type="text" name="orderName" id="edit_orderName"
+                           class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Deliver By</label>
+                    <input type="date" id="edit_deliverBy" name="deliverBy" min="{{ min_date }}"
+                           class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Quantity</label>
+                    <input type="number" name="quantity" id="edit_quantity" min="1" max="25"
+                           class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Show Name</label>
+                    <select name="showName" id="edit_showName"
+                            class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none">
+                        {% for job in all_jobs %}
+                            <option value="{{ job.jobId }}">{{ job.showName }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cable Size</label>
+                    <select name="cableSize" id="edit_cableSize" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none">
+                        <option value='1/4"'>1/4"</option>
+                        <option value='1/8"'>1/8"</option>
+                        <option value='1/16"'>1/16"</option>
+                        <option value='3/8"'>3/8"</option>
+                        <option value='3/16"'>3/16"</option>
+                        <option value='5/16"'>5/16"</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cable Finish</label>
+                    <select name="cableFinishes" id="edit_cableFinishes" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none">
+                        <option value="GAL">Galvanized</option>
+                        <option value="BLK">Blackened</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-4">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Hardware Requirements</label>
+                <div class="flex gap-6">
+                    <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                        <input type="checkbox" name="turnbuckle" id="edit_turnbuckle" value="Turnbuckle" class="rounded text-emerald-500 focus:ring-emerald-400">
+                        Turnbuckle
+                    </label>
+                    <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                        <input type="checkbox" name="chain" id="edit_chain" value="Chain" class="rounded text-emerald-500 focus:ring-emerald-400">
+                        Chain
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Hardware Order</label>
+                        <select name="tcOrder" id="edit_tcOrder" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400">
+                            <option value="OT">Only Turnbuckle</option>
+                            <option value="OC">Only Chain</option>
+                            <option value="TC">Turnbuckle then Chain</option>
+                            <option value="CT">Chain then Turnbuckle</option>
+                            <option value="none">None</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Turnbuckle Size</label>
+                        <select name="turnbuckleSize" id="edit_turnbuckleSize" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400">
+                            <option value="">-- None --</option>
+                            <option value='3/8"X6"'>3/8" X 6"</option>
+                            <option value='1/2"X6"'>1/2" X 6"</option>
+                            <option value='1/2"X9"'>1/2" X 9"</option>
+                            <option value='5/8"X6"'>5/8" X 6"</option>
+                            <option value='5/8"X9"'>5/8" X 9"</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="edit_chainLength_group" style="display: none;">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Chain Length</label>
+                    <select id="edit_chainLength" name="chainLength" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400">
+                        <option value="" disabled selected>Choose option</option>
+                        <option value="2ft">2 ft</option>
+                        <option value="3ft">3 ft</option>
+                        <option value="4ft">4 ft</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Order Status</label>
+                <select name="status" id="edit_status" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400">
+                    <option value="Draft">Draft</option>
+                    <option value="Ordered">Ordered</option>
+                    <option value="InProgress">InProgress</option>
+                    <option value="Complete">Complete</option>
+                </select>
+            </div>
+
+            <div id="editErrors" class="hidden text-xs text-red-500 bg-red-50 p-3 rounded-lg border border-red-100"></div>
+        </form>
+
+        <div class="p-6 border-t border-slate-100 bg-slate-50 shrink-0 flex flex-col sm:flex-row gap-3">
+            <button type="submit" form="editForm" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-all active:scale-95">
+                Save Changes
+            </button>
+            <button type="button" onclick="closeEditModal()" class="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Cable Length Warning Modal -->
+<div id="cableLengthWarningModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
+    <div id="cableLengthWarningBackdrop" 
+         class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm opacity-0 transition-opacity duration-200">
+    </div>
+
+    <div id="cableLengthWarningCard" 
+         class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 opacity-0 scale-95 transition-all duration-200">
+        
+        <div class="flex flex-col items-center text-center mb-6">
+            <div class="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center border-4 border-amber-100 mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-2xl text-amber-500 animate-pulse"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800">Length Warning</h3>
+        </div>
+
+        <div class="bg-amber-50/50 border border-amber-100 rounded-xl p-4 mb-8">
+            <p class="text-sm leading-relaxed text-slate-600 text-center" id="cableLengthWarningMsg">
+                </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button type="button" id="cableLengthWarningCancel" 
+                    class="flex-1 order-2 sm:order-1 py-3 px-4 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 active:scale-95 transition-all">
+                Go Back
+            </button>
+            <button type="button" id="cableLengthWarningConfirm" 
+                    class="flex-1 order-1 sm:order-2 py-3 px-4 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 active:scale-95 transition-all">
+                Continue Order
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Taildown Preview -->
+<div id="previewModal" class="fixed inset-0 z-[9998] hidden"
+  data-img-soft-eye="{% static 'images/softEye.JPG' %}"
+  data-img-hard-eye="{% static 'images/hardEye.JPG' %}"
+  data-img-turnbuckle="{% static 'images/Turnbuckle.svg' %}"
+  data-img-chain="{% static 'images/Chain.svg' %}"
+  data-img-crosby="{% static 'images/crosby.JPG' %}"
+  data-img-nico="{% static 'images/nico.JPG' %}"
+>
+  <!-- Backdrop overlay — clicking it closes the modal -->
+  <div id="previewBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+ 
+  <!-- Modal container — centered, responsive, scrollable body -->
+  <div class="absolute inset-0 flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[95vh] flex flex-col overflow-hidden">
+ 
+      <!-- Modal Header — order name + context badges -->
+      <div class="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 border-b border-slate-200 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <h3 id="previewTitle" class="text-base sm:text-lg lg:text-xl font-bold text-slate-800 truncate pr-3"></h3>
+          <button type="button" id="previewCloseBtn" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <!-- Context badges: Qty, Show Name, Due Date (filled by JS) -->
+        <div id="headerBadges" class="flex items-center gap-2 mt-1.5 flex-wrap"></div>
+      </div>
+ 
+      <!-- Modal Body — scrollable -->
+      <div class="flex-1 overflow-y-auto slim-scroll">
+ 
+        <!-- Order Details Grid (filled by JS) -->
+        <div class="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 border-b border-slate-100">
+          <p class="text-[10px] sm:text-xs text-slate-400 uppercase tracking-[0.15em] font-medium mb-3">Order Details</p>
+          <div id="detailsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4"></div>
+        </div>
+ 
+        <!-- Assembly Diagram (filled by JS) -->
+        <div class="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 bg-gradient-to-b from-slate-50/50 to-white">
+          <p class="text-[10px] sm:text-xs text-slate-400 uppercase tracking-[0.15em] font-medium text-center mb-4 sm:mb-5">Assembly Order</p>
+          <div id="assemblyDiagram" class="flex flex-col items-center"></div>
+        </div>
+ 
+      </div>
+ 
+      <!-- Modal Footer -->
+      <div class="border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex-shrink-0">
+        <button type="button" id="previewDoneBtn" class="w-full py-2.5 sm:py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-sm font-semibold rounded-xl transition-colors tracking-wide">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+ 
