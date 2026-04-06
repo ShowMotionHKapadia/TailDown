@@ -1,5 +1,5 @@
 from django.urls import path
-from customer.views import (access_denied,DashboardView,password_change_view, customer_order, customer_order_cart, delete_cart_item, OrderEditView, order_edit_data,OrderDeleteView,order_detail_data,filterOrders)
+from customer.views import (access_denied,DashboardView,password_change_view, customer_order, customer_order_cart, delete_cart_item, OrderEditView, order_edit_data,OrderDeleteView,order_detail_data,filterOrders,print_taildown_order)
 
 urlpatterns = [
     path('access-denied/',access_denied, name='access_denied'),
@@ -13,4 +13,5 @@ urlpatterns = [
     path('order/<uuid:order_uuid>/delete/', OrderDeleteView.as_view(), name='order_delete'),
     path('orders/filter/', filterOrders, name='filter_orders'),
     path('password-change/', password_change_view, name='password_change'),
+    path('order/<uuid:order_uuid>/print/', print_taildown_order, name='print_order'),
 ]

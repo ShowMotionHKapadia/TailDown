@@ -23,6 +23,17 @@ from account.models import JobDetails
 from customer.models import TailDownCart, TailDownOrder
 from .forms import TailDownCartForm, TailDownOrderEditForm
 
+import os
+from io import BytesIO
+from django.conf import settings
+from django.http import HttpResponse
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, HRFlowable
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from PIL import Image as PILImage
+
 #Access denied page for unauthorise user
 @never_cache
 def access_denied(request):
@@ -341,6 +352,7 @@ def order_edit_data(request, order_uuid):
     }
     return JsonResponse(data)
 
+#Filter order data by date and show name
 @never_cache
 @login_required
 @csrf_protect
@@ -390,6 +402,7 @@ def filterOrders(request):
         'can_delete': can_delete,
     })
 
+#Delete order data
 @method_decorator(decorators, name='dispatch')
 class OrderDeleteView(PermissionRequiredMixin, LoginRequiredMixin, View):
     permission_required = 'customer.delete_taildownorder'
@@ -415,9 +428,10 @@ class OrderDeleteView(PermissionRequiredMixin, LoginRequiredMixin, View):
                 'message': 'Order not found.'
             }, status=404)
 
+#Delete cart item from cart page
 @never_cache
 @login_required
-@require_POST  # Only POST allowed, blocks accidental GET deletions.
+@require_POST 
 @csrf_protect
 @permission_required('customer.delete_taildowncart', raise_exception=True)
 def delete_cart_item(request, order_id):
@@ -433,6 +447,7 @@ def delete_cart_item(request, order_id):
         'message': 'Item removed from cart.'
     })
 
+#Password change view for customers
 @never_cache
 @login_required
 @csrf_protect
@@ -460,4 +475,145 @@ def password_change_view(request):
     else:
         form = PasswordChangeForm(user=request.user)
     return render(request, 'customer/password_change.html', {'form': form})
+
+#Print order details in PDF format
+never_cache
+@login_required
+@permission_required('customer.view_taildownorder', raise_exception=True)
+def print_taildown_order(request, order_uuid):
+    user = request.user
+    if user.is_superuser or user.has_perm('customer.view_all_taildownorders'):
+        order = get_object_or_404(TailDownOrder, orderId=order_uuid)
+    else:
+        order = get_object_or_404(TailDownOrder, orderId=order_uuid, customer=user)
+
+    buffer = BytesIO()
+    # Margins kept at 20 to maximize vertical space for larger images
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=30, bottomMargin=30, leftMargin=20, rightMargin=20, title=f"{order.orderName}")
+    elements = []
+    styles = getSampleStyleSheet()
+
+    # --- Styles ---
+    company_style = ParagraphStyle('Company', fontSize=22, fontName='Helvetica-Bold')
+    show_title_style = ParagraphStyle('ShowTitle', fontSize=12, fontName='Helvetica-Bold', spaceAfter=2)
+    label_style = ParagraphStyle('Label', fontSize=9, textColor=colors.grey, textTransform='uppercase', alignment=1)
+    value_style = ParagraphStyle('Value', fontSize=13, fontName='Helvetica-Bold', alignment=1)
+    assembly_title_style = ParagraphStyle('AssemblyTitle', fontSize=12, fontName='Helvetica', spaceBefore=8, spaceAfter=8)
+
+    # --- Header Section ---
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo.png')
+
+    if os.path.exists(logo_path): 
+        logo_img = Image(logo_path, width=2.1*inch, height=0.6*inch, kind='proportional')
+    else:
+        logo_img = Paragraph("ShowMotion, Inc.", company_style)
     
+    show_name = order.showName.showName if order.showName else 'N/A'
+    delivery_date = order.deliverBy.strftime('%m/%d/%Y') if order.deliverBy else 'N/A'
+
+    header_data = [[logo_img,
+        Paragraph(f"<b>Show:</b> {show_name}<br/><b>Name:</b> {order.orderName}", show_title_style),
+        Paragraph(f"<b>Estimated Date:</b><br/>{delivery_date}", show_title_style)
+]]
+
+    #Shrink the first column width to 1.5" to force the next column to start sooner
+    #Increase the middle column to give the text room to move left
+    header_table = Table(header_data, colWidths=[1.5*inch, 3.2*inch, 1.8*inch])
+
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (2,0), (2,0), 'RIGHT'),
+        ('LEFTPADDING', (0,0), (0,0), 0),
+        #Increase negative padding to -25 to pull the text significantly left
+        ('LEFTPADDING', (1,0), (1,0), -25), 
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ])) 
+
+    elements.append(header_table)
+    elements.append(HRFlowable(width="100%", thickness=2, color=colors.black, spaceBefore=5, spaceAfter=10, hAlign='LEFT'))
+    finish_map = {
+        "GAL": "Galvanized",
+        "BLK": "Blackened"
+    }
+
+    # --- Specs Table ---
+    specs = [
+        [Paragraph("<u>CABLE SIZE</u>", label_style), Paragraph("<u>FINISH</u>", label_style), Paragraph("<u>LENGTH</u>", label_style)],
+        [Paragraph(str(order.cableSize or ""), value_style), 
+        Paragraph(str(finish_map.get(order.cableFinishes)) or "", value_style), 
+        Paragraph(f"{order.cableLengthFt}' {order.cableLengthIn}\"", value_style)],
+        [Spacer(1, 8)] * 3,
+        [Paragraph("<u>TOP FITTING</u>", label_style), Paragraph("<u>END FITTING</u>", label_style), Paragraph("<u>QUANTITY</u>", label_style)],
+        [Paragraph(str(order.topType or ""), value_style), 
+        Paragraph(str(order.endType or ""), value_style), 
+        Paragraph(str(order.quantity or ""), value_style)]
+    ]
+
+    t = Table(specs, colWidths=[2*inch, 2*inch, 2*inch])
+    t.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BOX', (0,1), (0,1), 1, colors.black), ('BOX', (1,1), (1,1), 1, colors.black), ('BOX', (2,1), (2,1), 1, colors.black),
+        ('BOX', (0,4), (0,4), 1, colors.black), ('BOX', (1,4), (1,4), 1, colors.black), ('BOX', (2,4), (2,4), 1, colors.black), 
+        ('TOPPADDING', (0,1), (-1,1), 6), ('BOTTOMPADDING', (0,1), (-1,1), 6),
+        ('TOPPADDING', (0,4), (-1,4), 6), ('BOTTOMPADDING', (0,4), (-1,4), 6),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 10))
+
+    elements.append(Paragraph("<u>ASSEMBLY INSTRUCTIONS</u>", assembly_title_style))
+
+    def add_assembly_item(filename, label):
+        clean_filename = filename.replace('.svg', '.JPG') 
+        path = os.path.join(settings.BASE_DIR, 'static', clean_filename)
+        
+        if os.path.exists(path):
+            
+            with PILImage.open(path) as pil_img:
+                width, height = pil_img.size
+               
+                if width > height:
+                    pil_img = pil_img.rotate(90, expand=True)
+                    pil_img.save(path) 
+            from reportlab.platypus import Image as RLImage
+            img = RLImage(path, width=1.4*inch, height=1.4*inch, kind='proportional')
+            elements.append(img)
+            elements.append(Paragraph(label, styles['Normal']))
+            elements.append(Spacer(1, 6))
+    
+    # 1. TOP (Always 1st)
+    if order.topType == 'Soft Eye': add_assembly_item('images/softEye.JPG', "1 - TOP: Soft Eye")
+    elif order.topType == 'Hard Eye': add_assembly_item('images/hardeye.JPG', "1 - TOP: Hard Eye")
+    # 2. END (Always 2nd)
+    if order.endType == 'Nico': add_assembly_item('images/nico.JPG', "2 - END: Nico")
+    elif order.endType == 'Crosby': add_assembly_item('images/crosby.JPG', "2 - END: Crosby")
+    # 3 & 4. Hardware Logic (Removed rotation)
+    tc_val = order.tcOrder
+    
+    if tc_val == 'OT':
+        if order.turnbuckle:
+            add_assembly_item('images/Turnbuckle_Vertical.JPG', f"3 - Turnbuckle ({order.turnbuckleSize})")
+            
+    elif tc_val == 'OC':
+        if order.chain:
+            add_assembly_item('images/Chain.JPG', f"3 - Chain ({order.chainLength})")
+            
+    elif tc_val == 'TC':
+        if order.turnbuckle:
+            add_assembly_item('images/Turnbuckle_Vertical.JPG', f"3 - Turnbuckle ({order.turnbuckleSize})")
+        if order.chain:
+            add_assembly_item('images/Chain.JPG', f"4 - Chain ({order.chainLength})")
+            
+    elif tc_val == 'CT':
+        if order.chain:
+            add_assembly_item('images/Chain.JPG', f"3 - Chain ({order.chainLength})")
+        if order.turnbuckle:
+            add_assembly_item('images/Turnbuckle_Vertical.JPG', f"4 - Turnbuckle ({order.turnbuckleSize})")
+    # --- Build ---
+    doc.build(elements)
+    pdf = buffer.getvalue()
+    buffer.close()
+    
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="Taildown_{order.orderName}.pdf"'
+    return response

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from account.models import User, JobDetails
+from axes.models import AccessFailureLog, AccessAttempt
 
 class UserModelAdmin(UserAdmin):
     model = User
@@ -31,3 +32,26 @@ admin.site.register(User, UserModelAdmin)
 class JobDetailsAdmin(admin.ModelAdmin):
     list_display = ('jobId','jobNo' ,'showName', 'customer', 'createdOn','is_deleted')
     autocomplete_fields = ['customer'] # This now works because of your search_fields!
+
+# Remove the default Axes admin pages and replace with custom one
+admin.site.unregister(AccessFailureLog)
+admin.site.unregister(AccessAttempt)
+
+@admin.register(AccessAttempt)
+class AccessAttemptAdmin(admin.ModelAdmin):
+    list_display = ('attempt_time', 'ip_address', 'username', 'user_agent', 'path_info', 'failures_since_start', 'is_locked')
+    list_filter = ('attempt_time', 'path_info')
+    search_fields = ('username', 'ip_address')
+    readonly_fields = ('attempt_time', 'ip_address', 'username', 'user_agent', 'path_info', 'http_accept', 'failures_since_start', 'get_data', 'post_data')
+    actions = ['unlock_users']
+
+    @admin.display(boolean=True, description="Locked Out")
+    def is_locked(self, obj):
+        from django.conf import settings
+        return obj.failures_since_start >= settings.AXES_FAILURE_LIMIT
+
+    @admin.action(description="Unlock selected users")
+    def unlock_users(self, request, queryset):
+        count = queryset.count()
+        queryset.delete()
+        self.message_user(request, f"Successfully unlocked {count} user(s).")

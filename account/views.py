@@ -12,7 +12,8 @@ from account.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import SetPasswordForm
 from django.views.decorators.cache import never_cache 
-from django.contrib.auth.decorators import login_required  
+from django.contrib.auth.decorators import login_required 
+from axes.handlers.proxy import AxesProxyHandler
 
 @never_cache
 def home(request):
@@ -24,40 +25,55 @@ def login_view(request):
         email = request.POST.get("email")
         password = request.POST.get("password")
 
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            messages.error(request, "Invalid email or password.")
-            return redirect('login')
-
-        # 2. Check the password manually
-        if not user.check_password(password):
-            messages.error(request, "Invalid email or password.")
-            return redirect('login')
-
-        if not user.is_active:
+        if AxesProxyHandler.is_locked(request, credentials={'username': email}):
             messages.error(
-                request, "Your account is inactive. Please activate your account."
+                request, 
+                "Your account has been temporarily locked due to too many "
+                "failed login attempts. Please try again later."
             )
-            # uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-            # token = default_token_generator.make_token(user)
-            # activation_link = reverse(
-            #     'activate', kwargs={'uidb64': uidb64, 'token': token})
-            # activation_url = f'{settings.SITE_DOMAIN}{activation_link}'
-            # send_activation_email(user.email, activation_url)
             return redirect('login')
 
         user = authenticate(request, email=email, password=password)
 
+        # try:
+        #     user = User.objects.get(email=email)
+        # except User.DoesNotExist:
+        #     messages.error(request, "Invalid email or password.")
+        #     return redirect('login')
+
+        # 2. Check the password manually
+        # if not user.check_password(password):
+        #     messages.error(request, "Invalid email or password.")
+        #     return redirect('login')
+
+        # if not user.is_active:
+        #     messages.error(
+        #         request, "Your account is inactive. Please activate your account."
+        #     )
+        #     # uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+        #     # token = default_token_generator.make_token(user)
+        #     # activation_link = reverse(
+        #     #     'activate', kwargs={'uidb64': uidb64, 'token': token})
+        #     # activation_url = f'{settings.SITE_DOMAIN}{activation_link}'
+        #     # send_activation_email(user.email, activation_url)
+        #     return redirect('login')
+
         if user is not None:
-            login(request, user)
-            messages.success(request, f"Welcome back, {request.user.first_name.capitalize()}!")
-            if user.is_authenticated:
-                return redirect('dashboard')
-            else:
+            # ── KEEP: is_active check, but now it's AFTER authentication ──
+            if not user.is_active:
                 messages.error(
-                    request, "You do not have permission to access this area."
+                    request, 
+                    "Your account is inactive. Please activate your account."
                 )
+                return redirect('login')
+
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            messages.success(
+                request, 
+                f"Welcome back, {request.user.first_name.capitalize()}!"
+            )
+            
+            return redirect('dashboard')
         else:
             messages.error(request, "Invalid email or password.")
             return redirect('login')

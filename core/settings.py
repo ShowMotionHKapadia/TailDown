@@ -61,10 +61,12 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
+AXES_LOCKOUT_URL = '/login/'
 AXES_FAILURE_LIMIT = 5            # Lock after 5 failed attempts
 AXES_COOLOFF_TIME = 1             # Lock for 1 hour
-AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]
+AXES_LOCKOUT_PARAMETERS = ["username"]  # Lock based on username only. This prevents attackers from locking out all users by using different IPs.
 AXES_RESET_ON_SUCCESS = True
+AXES_HANDLER = 'axes.handlers.database.AxesDatabaseHandler'
 
 ROOT_URLCONF = 'core.urls'
 
@@ -128,7 +130,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/New_York'
 
 USE_I18N = True
 

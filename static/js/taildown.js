@@ -582,7 +582,6 @@ function setupCableLengthWarning() {
 
 
 // --- Filter Order Start --- //
-
 function applyFilters() {
     var show = $('#filterShow').val();
     var deliverBy = $('#filterDate').val();
@@ -643,7 +642,9 @@ function applyFilters() {
                 html += '<td class="px-6 py-4 text-center">';
                 html += '<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ' + statusClass + '">' + order.status + '</span></td>';
                 html += '<td class="px-6 py-4 text-center"><div class="flex items-center justify-center gap-2">';
-
+                html += '<a href="' + printUrl + '" target="_blank" class="inline-flex items-center justify-center p-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors" title="Print Spec Sheet">';
+                html += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-4 h-4 fill-current"><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64h226.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L373.3 18.7C361.3 6.7 345 0 328 0H128zm256 160v64c0 17.7 14.3 32 32 32h64v160c0 17.7-14.3 32-32 32H128c-17.7 0-32-14.3-32-32V256h64c17.7 0 32-14.3 32-32v-64h192zm-224 288h224v64H160v-64z"/></svg></a>';
+                
                 if (canChange) {
                     html += '<button type="button" onclick="openEditModal(\'' + order.orderId + '\')" ';
                     html += 'class="inline-flex items-center justify-center p-2 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors">';
@@ -672,21 +673,18 @@ function applyFilters() {
         }
     });
 }
-
 // --- Filter Order End --- //
 
 // --- Taildown Preview Start --- //
-
-/* ============================ CONSTANTS ============================ */
-var mdl = document.getElementById('previewModal');
+var $mdl = $('#previewModal');
 
 var IMG = {
-  CROSBY:     mdl.dataset.imgCrosby     || '',
-  NICO:       mdl.dataset.imgNico       || '',
-  SOFT_EYE:   mdl.dataset.imgSoftEye    || '',
-  HARD_EYE:   mdl.dataset.imgHardEye    || '',
-  TURNBUCKLE: mdl.dataset.imgTurnbuckle || '',
-  CHAIN:      mdl.dataset.imgChain      || ''
+  CROSBY:     $mdl.data('img-crosby')     || '',
+  NICO:       $mdl.data('img-nico')       || '',
+  SOFT_EYE:   $mdl.data('img-soft-eye')   || '',
+  HARD_EYE:   $mdl.data('img-hard-eye')   || '',
+  TURNBUCKLE: $mdl.data('img-turnbuckle') || '',
+  CHAIN:      $mdl.data('img-chain')      || ''
 };
 
 var TC_LABELS = {
@@ -698,7 +696,7 @@ var TC_LABELS = {
 var Finishies = {
     'GAL': 'Galvanized',
     'BLK': 'Blackened',
-}
+};
 
 var COLORS = {
     emerald: { border: '#a7f3d0', text: '#065f46' },
@@ -710,8 +708,10 @@ var COLORS = {
 /* ============================ UTILITY FUNCTIONS ============================ */
 
 function val(v) {
-    if (!v || v === 'None' || v === 'none' || v === 'undefined' || v === 'null') return '';
-    return v.trim();
+    if (v === undefined || v === null || v === '') return '';
+    v = String(v).trim();
+    if (v === 'None' || v === 'none' || v === 'undefined' || v === 'null') return '';
+    return v;
 }
 
 function isTruthy(v) {
@@ -736,150 +736,139 @@ function getEndImg(endType) {
     return null;
 }
 
-function $(id) { return document.getElementById(id); }
-
 /* ============================ DATA EXTRACTION & VALIDATION ============================ */
 
-function extractData(dataset) {
-    var d = dataset;
-    var hasTb = isTruthy(d.turnbuckle);
-    var hasCh = isTruthy(d.chain);
-    var ft = val(d.cableLengthFt) || '0';
-    var inches = val(d.cableLengthIn) || '0';
-    var tcOrder = val(d.tcOrder) || 'none';
+function extractData($btn) {
+    var hasTb = isTruthy($btn.data('turnbuckle'));
+    var hasCh = isTruthy($btn.data('chain'));
+    var ft = val($btn.data('cable-length-ft')) || '0';
+    var inches = val($btn.data('cable-length-in')) || '0';
+    var tcOrder = val($btn.data('tc-order')) || 'none';
 
     return {
-        orderName:     val(d.orderName) || 'Untitled Order',
-        quantity:      val(d.quantity) || '1',
-        showName:      val(d.showName),
-        deliverBy:     val(d.deliverBy),
-        topType:       val(d.topType),
-        endType:       val(d.endType),
-        cableSize:     val(d.cableSize),
-        cableFinishes: Finishies[val(d.cableFinishes)] || val(d.cableFinishes),
+        orderName:     val($btn.data('order-name')) || 'Untitled Order',
+        quantity:      val($btn.data('quantity')) || '1',
+        showName:      val($btn.data('show-name')),
+        deliverBy:     val($btn.data('deliver-by')),
+        topType:       val($btn.data('top-type')),
+        endType:       val($btn.data('end-type')),
+        cableSize:     val($btn.data('cable-size')),
+        cableFinishes: Finishies[val($btn.data('cable-finishes'))] || val($btn.data('cable-finishes')),
         cableLength:   ft + "' " + inches + '"',
         hasTb:         hasTb,
         hasCh:         hasCh,
         tcOrder:       tcOrder,
         tcOrderLabel:  TC_LABELS[tcOrder] || tcOrder,
-        tbSize:        hasTb ? val(d.turnbuckleSize) : '',
-        chainLen:      hasCh ? val(d.chainLength) : ''
+        tbSize:        hasTb ? val($btn.data('turnbuckle-size')) : '',
+        chainLen:      hasCh ? val($btn.data('chain-length')) : ''
     };
 }
 
 /* ============================ HEADER BUILDER ============================ */
 
 function createBadge(text, bgClass, textClass, borderClass) {
-    var badge = document.createElement('span');
-    badge.className = 'px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border ' + bgClass + ' ' + textClass + ' ' + borderClass;
-    badge.textContent = text;
-    return badge;
+    return $('<span>')
+        .addClass('px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border ' + bgClass + ' ' + textClass + ' ' + borderClass)
+        .text(text);
 }
 
 function buildHeader(data) {
-    $('previewTitle').textContent = data.orderName;
+    $('#previewTitle').text(data.orderName);
 
-    var badges = $('headerBadges');
-    badges.innerHTML = '';
+    var $badges = $('#headerBadges').empty();
 
-    badges.appendChild(createBadge('Qty: ' + data.quantity, 'bg-emerald-50', 'text-emerald-700', 'border-emerald-200'));
+    $badges.append(createBadge('Qty: ' + data.quantity, 'bg-emerald-50', 'text-emerald-700', 'border-emerald-200'));
 
     if (data.showName) {
-        badges.appendChild(createBadge(data.showName, 'bg-blue-50', 'text-blue-700', 'border-blue-200'));
+        $badges.append(createBadge(data.showName, 'bg-blue-50', 'text-blue-700', 'border-blue-200'));
     }
     if (data.deliverBy) {
-        badges.appendChild(createBadge('Due: ' + data.deliverBy, 'bg-violet-50', 'text-violet-700', 'border-violet-200'));
+        $badges.append(createBadge('Due: ' + data.deliverBy, 'bg-violet-50', 'text-violet-700', 'border-violet-200'));
     }
 }
 
 /* ============================ DETAILS GRID BUILDER ============================ */
 
 function createDetailCell(label, value) {
-    var cell = document.createElement('div');
+    var $cell = $('<div>');
 
-    var lbl = document.createElement('p');
-    lbl.className = 'text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider font-medium mb-0.5';
-    lbl.textContent = label;
+    $('<p>')
+        .addClass('text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider font-medium mb-0.5')
+        .text(label)
+        .appendTo($cell);
 
-    var v = document.createElement('p');
-    v.className = 'text-sm sm:text-base lg:text-lg font-semibold text-slate-700';
-    v.textContent = value || '—';
+    $('<p>')
+        .addClass('text-sm sm:text-base lg:text-lg font-semibold text-slate-700')
+        .text(value || '—')
+        .appendTo($cell);
 
-    cell.appendChild(lbl);
-    cell.appendChild(v);
-    return cell;
+    return $cell;
 }
 
 function buildDetailsGrid(data) {
-    var grid = $('detailsGrid');
-    grid.innerHTML = '';
+    var $grid = $('#detailsGrid').empty();
 
-    grid.appendChild(createDetailCell('Cable Size', data.cableSize));
-    grid.appendChild(createDetailCell('Cable Finish', data.cableFinishes));
-    grid.appendChild(createDetailCell('Cable Length', data.cableLength));
-    grid.appendChild(createDetailCell('Top Fitting', data.topType || 'None'));
-    grid.appendChild(createDetailCell('End Fitting', data.endType || 'None'));
+    $grid.append(createDetailCell('Cable Size', data.cableSize));
+    $grid.append(createDetailCell('Cable Finish', data.cableFinishes));
+    $grid.append(createDetailCell('Cable Length', data.cableLength));
+    $grid.append(createDetailCell('Top Fitting', data.topType || 'None'));
+    $grid.append(createDetailCell('End Fitting', data.endType || 'None'));
 
     if (data.hasTb || data.hasCh) {
-        grid.appendChild(createDetailCell('Hardware Order', data.tcOrderLabel));
+        $grid.append(createDetailCell('Hardware Order', data.tcOrderLabel));
     }
     if (data.hasTb && data.tbSize) {
-        grid.appendChild(createDetailCell('Turnbuckle Size', data.tbSize));
+        $grid.append(createDetailCell('Turnbuckle Size', data.tbSize));
     }
     if (data.hasCh && data.chainLen) {
-        grid.appendChild(createDetailCell('Chain Length', data.chainLen));
+        $grid.append(createDetailCell('Chain Length', data.chainLen));
     }
 }
 
 /* ============================ ASSEMBLY DIAGRAM BUILDER ============================ */
 
 function createPartCard(imgSrc, label, detail, color) {
-    var wrapper = document.createElement('div');
-    wrapper.className = 'flex flex-col items-center text-center w-full';
+    var $wrapper = $('<div>').addClass('flex flex-col items-center text-center w-full');
 
-    var imgBox = document.createElement('div');
-    imgBox.className = 'relative w-28 h-32 sm:w-32 sm:h-40 lg:w-36 lg:h-44 flex items-center justify-center rounded-xl border-2 bg-white shadow-sm overflow-hidden p-3';
-    imgBox.style.borderColor = getColor(color, 'border');
+    var $imgBox = $('<div>')
+        .addClass('relative w-28 h-32 sm:w-32 sm:h-40 lg:w-36 lg:h-44 flex items-center justify-center rounded-xl border-2 bg-white shadow-sm overflow-hidden p-3')
+        .css('border-color', getColor(color, 'border'));
 
     if (imgSrc) {
-        var img = document.createElement('img');
-        img.src = imgSrc;
-        img.alt = label;
-        img.className = 'max-w-full max-h-full object-contain';
-        imgBox.appendChild(img);
+        $('<img>')
+            .attr({ src: imgSrc, alt: label })
+            .addClass('max-w-full max-h-full object-contain')
+            .appendTo($imgBox);
     } else {
-        var ph = document.createElement('span');
-        ph.className = 'text-slate-300 text-xs sm:text-sm';
-        ph.textContent = 'No Image';
-        imgBox.appendChild(ph);
+        $('<span>')
+            .addClass('text-slate-300 text-xs sm:text-sm')
+            .text('No Image')
+            .appendTo($imgBox);
     }
 
-    var textGroup = document.createElement('div');
-    textGroup.className = 'mt-2 sm:mt-3 px-2';
+    var $textGroup = $('<div>').addClass('mt-2 sm:mt-3 px-2');
 
-    var title = document.createElement('p');
-    title.className = 'text-sm sm:text-base lg:text-lg font-bold leading-tight';
-    title.style.color = getColor(color, 'text');
-    title.textContent = label;
-    textGroup.appendChild(title);
+    $('<p>')
+        .addClass('text-sm sm:text-base lg:text-lg font-bold leading-tight')
+        .css('color', getColor(color, 'text'))
+        .text(label)
+        .appendTo($textGroup);
 
     if (detail) {
-        var sub = document.createElement('p');
-        sub.className = 'text-xs sm:text-sm lg:text-base text-slate-400 mt-0.5 font-medium';
-        sub.textContent = detail;
-        textGroup.appendChild(sub);
+        $('<p>')
+            .addClass('text-xs sm:text-sm lg:text-base text-slate-400 mt-0.5 font-medium')
+            .text(detail)
+            .appendTo($textGroup);
     }
 
-    wrapper.appendChild(imgBox);
-    wrapper.appendChild(textGroup);
-    return wrapper;
+    $wrapper.append($imgBox).append($textGroup);
+    return $wrapper;
 }
 
 function createConnector() {
-    var div = document.createElement('div');
-    div.className = 'flex flex-col items-center py-0.5 sm:py-1';
-    div.innerHTML = '<div class="w-0.5 h-5 sm:h-6 lg:h-8 bg-slate-200 rounded-full"></div>';
-    return div;
+    return $('<div>')
+        .addClass('flex flex-col items-center py-0.5 sm:py-1')
+        .html('<div class="w-0.5 h-5 sm:h-6 lg:h-8 bg-slate-200 rounded-full"></div>');
 }
 
 function getHardwareParts(data) {
@@ -899,8 +888,7 @@ function getHardwareParts(data) {
 }
 
 function buildAssemblyDiagram(data) {
-    var container = $('assemblyDiagram');
-    container.innerHTML = '';
+    var $container = $('#assemblyDiagram').empty();
 
     var parts = [];
 
@@ -916,9 +904,9 @@ function buildAssemblyDiagram(data) {
 
     // Render
     for (var i = 0; i < parts.length; i++) {
-        container.appendChild(createPartCard(parts[i].img, parts[i].label, parts[i].detail || null, parts[i].color));
+        $container.append(createPartCard(parts[i].img, parts[i].label, parts[i].detail || null, parts[i].color));
         if (i < parts.length - 1) {
-        container.appendChild(createConnector());
+            $container.append(createConnector());
         }
     }
 }
@@ -926,43 +914,39 @@ function buildAssemblyDiagram(data) {
 /* ============================ MODAL CONTROLLER ============================ */
 
 function resetModal() {
-    $('previewTitle').textContent = '';
-    $('headerBadges').innerHTML = '';
-    $('detailsGrid').innerHTML = '';
-    $('assemblyDiagram').innerHTML = '';
+    $('#previewTitle').text('');
+    $('#headerBadges').empty();
+    $('#detailsGrid').empty();
+    $('#assemblyDiagram').empty();
 }
 
-function openPreview(btn) {
+function openPreview($btn) {
     resetModal();
-    var data = extractData(btn.dataset);
+    var data = extractData($btn);
     buildHeader(data);
     buildDetailsGrid(data);
     buildAssemblyDiagram(data);
-    $('previewModal').classList.remove('hidden');
+    $('#previewModal').removeClass('hidden');
 }
 
 function closePreview() {
-    $('previewModal').classList.add('hidden');
+    $('#previewModal').addClass('hidden');
 }
 
 /* ============================ EVENT LISTENERS ============================ */
 
-$('previewBackdrop').addEventListener('click', closePreview);
-$('previewCloseBtn').addEventListener('click', closePreview);
-$('previewDoneBtn').addEventListener('click', closePreview);
+$('#previewBackdrop').on('click', closePreview);
+$('#previewCloseBtn').on('click', closePreview);
+$('#previewDoneBtn').on('click', closePreview);
 
-document.addEventListener('click', function(e) {
-    var btn = e.target.closest('.preview-btn');
-    if (btn) {
-        e.preventDefault();
-        e.stopPropagation();
-        openPreview(btn);
-    }
+$(document).on('click', '.preview-btn', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    openPreview($(this));
 });
 
 // --- Taildown Preview End --- //
 
-//Load logic in DOM
 $(document).ready(function() {
 
     //Render any Django flash messages (success / error / warning) as toast notifications.
