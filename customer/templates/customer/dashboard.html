@@ -93,7 +93,7 @@
                         <td class="px-6 py-4 text-sm text-center font-medium">{{ order.quantity }}</td>
                         <td class="px-6 py-4 text-center">
                             <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase 
-                                {% if order.status == 'Placed' %} bg-emerald-100 text-emerald-700
+                                {% if order.status == 'Ordered' %} bg-emerald-100 text-emerald-700
                                 {% elif order.status == 'Draft' %} bg-amber-100 text-amber-700
                                 {% else %} bg-slate-100 text-slate-600 {% endif %}">
                                 {{ order.status }}

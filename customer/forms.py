@@ -72,18 +72,18 @@ class TailDownCartForm(forms.ModelForm):
         else:
             if ft is not None and ft < 0:
                 self.add_error('cableLengthFt', 'Feet cannot be negative.')
-            # if ft is not None and ft > 70:
-            #     self.add_error('cableLengthFt', 'Feet cannot exceed 70.')
-            # if inches is not None:
-            #     if inches < 0 or inches >= 12:
-            #         self.add_error('cableLengthIn', 'Inches must be between 0 and 11.')
+            if ft is not None and ft > 70:
+                self.add_error('cableLengthFt', 'Feet cannot exceed 70.')
+            if inches is not None:
+                if inches < 0 or inches >= 12:
+                    self.add_error('cableLengthIn', 'Inches must be between 0 and 11.')
             if (ft == 0 or ft is None) and (inches == 0 or inches is None):
                 self.add_error('cableLengthFt', 'Cable length cannot be zero.')
 
             # # Warning for long cables (70+ ft)
-            # total_inches = (ft or 0) * 12 + (inches or 0)
-            # if total_inches >= 840:
-            #     self.cable_length_warning = "Cable length is 70 ft or more. Please double-check the measurement."
+            total_inches = (ft or 0) * 12 + (inches or 0)
+            if total_inches >= 840:
+                self.cable_length_warning = "Cable length is 70 ft or more. Please double-check the measurement."
 
         #If the turnbuckle checkbox is selected, a size must also be chosen
         if turnbuckle and not tb_size:
@@ -101,8 +101,8 @@ class TailDownCartForm(forms.ModelForm):
             self.add_error('chainLength', 'Chain is selected, so chain length is required.')
 
         # # Chain length should be empty when chain is not selected
-        # if not chain and chain_length:
-        #     self.add_error('chainLength', 'Chain length should be empty when chain is not selected.')
+        if not chain and chain_length:
+            self.add_error('chainLength', 'Chain length should be empty when chain is not selected.')
 
         return cleaned_data
     
@@ -147,8 +147,11 @@ class TailDownOrderEditForm(forms.ModelForm):
                 self.add_error('quantity', 'Please enter a quantity between 1 and 25.')
 
         # Delivery date validation
+        # On edit: only reject a past date if the user actually changed it.
+        # This allows editing old orders (e.g. fixing a typo, updating status)
+        # without the already-passed delivery date blocking the save.
         if deliver_by:
-            if deliver_by < date.today():
+            if deliver_by < date.today() and deliver_by != self.instance.deliverBy:
                 self.add_error('deliverBy', 'Delivery date cannot be in the past.')
         else:
             self.add_error('deliverBy', 'Please select a delivery date.')
@@ -159,18 +162,18 @@ class TailDownOrderEditForm(forms.ModelForm):
         else:
             if ft is not None and ft < 0:
                 self.add_error('cableLengthFt', 'Feet cannot be negative.')
-            # if ft is not None and ft > 70:
-            #     self.add_error('cableLengthFt', 'Feet cannot exceed 70.')
-            # if inches is not None:
-            #     if inches < 0 or inches >= 12:
-            #         self.add_error('cableLengthIn', 'Inches must be between 0 and 11.')
+            if ft is not None and ft > 70:
+                self.add_error('cableLengthFt', 'Feet cannot exceed 70.')
+            if inches is not None:
+                if inches < 0 or inches >= 12:
+                    self.add_error('cableLengthIn', 'Inches must be between 0 and 11.')
             if (ft == 0 or ft is None) and (inches == 0 or inches is None):
                 self.add_error('cableLengthFt', 'Cable length cannot be zero.')
 
             # Warning for long cables (70+ ft)
-            # total_inches = (ft or 0) * 12 + (inches or 0)
-            # if total_inches >= 840:
-            #     self.cable_length_warning = "Cable length is 70 ft or more. Please double-check the measurement."
+            total_inches = (ft or 0) * 12 + (inches or 0)
+            if total_inches >= 840:
+                self.cable_length_warning = "Cable length is 70 ft or more. Please double-check the measurement."
 
         if turnbuckle and not tb_size:
             self.add_error('turnbuckleSize', 'Turnbuckle is selected, so size is required.')
@@ -184,7 +187,7 @@ class TailDownOrderEditForm(forms.ModelForm):
         if chain and not chain_length:
             self.add_error('chainLength', 'Chain is selected, so chain length is required.')
 
-        # if not chain and chain_length:
-        #     self.add_error('chainLength', 'Chain length should be empty when chain is not selected.')
+        if not chain and chain_length:
+            self.add_error('chainLength', 'Chain length should be empty when chain is not selected.')
 
         return cleaned_data

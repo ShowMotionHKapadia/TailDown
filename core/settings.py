@@ -64,7 +64,7 @@ AUTHENTICATION_BACKENDS = [
 AXES_LOCKOUT_URL = '/login/'
 AXES_FAILURE_LIMIT = 5            # Lock after 5 failed attempts
 AXES_COOLOFF_TIME = 1             # Lock for 1 hour
-AXES_LOCKOUT_PARAMETERS = ["username"]  # Lock based on username only. This prevents attackers from locking out all users by using different IPs.
+AXES_LOCKOUT_PARAMETERS = ["username","ip_address"] # Lockout based on both username and IP address
 AXES_RESET_ON_SUCCESS = True
 AXES_HANDLER = 'axes.handlers.database.AxesDatabaseHandler'
 
@@ -158,11 +158,18 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Prevents the browser from "pre-filling" the form if the user logs out
 SESSION_COOKIE_AGE = 3600  # 1 hour (3600 seconds)
+SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=False)  # Set to True in production when using HTTPS
+CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=False)  # Set to True in production when using HTTPS
 
+# Start small — 1 hour. Verify HTTPS works everywhere.
+SECURE_HSTS_SECONDS = 3600
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=False)
 APPEND_SLASH = True
 
 SITE_DOMAIN = 'http://127.0.0.1:8000/'
 SITE_NAME = 'ShowMotion Inc.'
+SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=False) # Set to True in production when using HTTPS
 
 # Mail Trap Email Configuration
 EMAIL_BACKEND = env('EBACKEND')
@@ -170,6 +177,7 @@ EMAIL_HOST = env('EHOST')
 EMAIL_HOST_USER = env('EHOSTUSER')
 EMAIL_HOST_PASSWORD = env('EHOSTPASSWORD')
 EMAIL_PORT = env('EPORT')
+EMAIL_USE_SSL = env.bool('EUSESSL')
 EMAIL_USE_TLS = env.bool('EUSETLS')
 
 # When user click on logout button below will be used to redirect user to login page

@@ -122,7 +122,7 @@ class TailDownCart(models.Model):
     turnbuckleSize = models.CharField(max_length=10, verbose_name=("Turnbuckle &Size"))
 
     #Chain Lenght
-    chainLength = models.CharField(max_length=10, blank=" ")
+    chainLength = models.CharField(max_length=10, blank=True)
 
     #Number of units ordered; enforced between 1 and 25 at the database and form level
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1),MaxValueValidator(25)]) 

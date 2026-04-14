@@ -1,0 +1,260 @@
+diff --git a/account/utils.py b/account/utils.py
+index 7c4e757..ca6ca73 100644
+--- a/account/utils.py
++++ b/account/utils.py
+@@ -16,12 +16,11 @@ class SendEmailThread(threading.Thread):
+ 
+ def send_activation_email(recipient_email, activation_url):
+     subject = "Activate your account on " + settings.SITE_NAME
+-    from_email = 'no_reply@demomailtrap.co'
++    from_email = 'no_reply@showmotion.com'
+     to_email = [recipient_email]
+ 
+     # Load the HTML template
+-    html_content = render_to_string(
+-        'account/activation_email.html', {'activation_url': activation_url})
++    html_content = render_to_string( 'account/activation_email.html', {'activation_url': activation_url})
+     text_content = strip_tags(html_content)
+ 
+     email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+@@ -31,7 +30,7 @@ def send_activation_email(recipient_email, activation_url):
+ 
+ def send_reset_password_email(recipient_email, reset_url):
+     subject = 'Reset Your Password on '+settings.SITE_NAME
+-    from_email = 'no_reply@demomailtrap.co'
++    from_email = 'no_reply@showmotion.com'
+     to_email = [recipient_email]
+ 
+     # Load the HTML template
+diff --git a/core/settings.py b/core/settings.py
+index 413d7e1..53a93b2 100644
+--- a/core/settings.py
++++ b/core/settings.py
+@@ -64,7 +64,7 @@ AUTHENTICATION_BACKENDS = [
+ AXES_LOCKOUT_URL = '/login/'
+ AXES_FAILURE_LIMIT = 5            # Lock after 5 failed attempts
+ AXES_COOLOFF_TIME = 1             # Lock for 1 hour
+-AXES_LOCKOUT_PARAMETERS = ["username"]  # Lock based on username only. This prevents attackers from locking out all users by using different IPs.
++AXES_LOCKOUT_PARAMETERS = ["username","ip_address"] # Lockout based on both username and IP address
+ AXES_RESET_ON_SUCCESS = True
+ AXES_HANDLER = 'axes.handlers.database.AxesDatabaseHandler'
+ 
+@@ -158,11 +158,18 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+ 
+ # Prevents the browser from "pre-filling" the form if the user logs out
+ SESSION_COOKIE_AGE = 3600  # 1 hour (3600 seconds)
++SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=False)  # Set to True in production when using HTTPS
++CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=False)  # Set to True in production when using HTTPS
+ 
++# Start small — 1 hour. Verify HTTPS works everywhere.
++SECURE_HSTS_SECONDS = 3600
++SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True)
++SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=False)
+ APPEND_SLASH = True
+ 
+ SITE_DOMAIN = 'http://127.0.0.1:8000/'
+ SITE_NAME = 'ShowMotion Inc.'
++SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=False) # Set to True in production when using HTTPS
+ 
+ # Mail Trap Email Configuration
+ EMAIL_BACKEND = env('EBACKEND')
+@@ -170,6 +177,7 @@ EMAIL_HOST = env('EHOST')
+ EMAIL_HOST_USER = env('EHOSTUSER')
+ EMAIL_HOST_PASSWORD = env('EHOSTPASSWORD')
+ EMAIL_PORT = env('EPORT')
++EMAIL_USE_SSL = env.bool('EUSESSL')
+ EMAIL_USE_TLS = env.bool('EUSETLS')
+ 
+ # When user click on logout button below will be used to redirect user to login page
+diff --git a/customer/forms.py b/customer/forms.py
+index 8a87761..6d4a7d8 100644
+--- a/customer/forms.py
++++ b/customer/forms.py
+@@ -72,18 +72,18 @@ class TailDownCartForm(forms.ModelForm):
+         else:
+             if ft is not None and ft < 0:
+                 self.add_error('cableLengthFt', 'Feet cannot be negative.')
+-            # if ft is not None and ft > 70:
+-            #     self.add_error('cableLengthFt', 'Feet cannot exceed 70.')
+-            # if inches is not None:
+-            #     if inches < 0 or inches >= 12:
+-            #         self.add_error('cableLengthIn', 'Inches must be between 0 and 11.')
++            if ft is not None and ft > 70:
++                self.add_error('cableLengthFt', 'Feet cannot exceed 70.')
++            if inches is not None:
++                if inches < 0 or inches >= 12:
++                    self.add_error('cableLengthIn', 'Inches must be between 0 and 11.')
+             if (ft == 0 or ft is None) and (inches == 0 or inches is None):
+                 self.add_error('cableLengthFt', 'Cable length cannot be zero.')
+ 
+             # # Warning for long cables (70+ ft)
+-            # total_inches = (ft or 0) * 12 + (inches or 0)
+-            # if total_inches >= 840:
+-            #     self.cable_length_warning = "Cable length is 70 ft or more. Please double-check the measurement."
++            total_inches = (ft or 0) * 12 + (inches or 0)
++            if total_inches >= 840:
++                self.cable_length_warning = "Cable length is 70 ft or more. Please double-check the measurement."
+ 
+         #If the turnbuckle checkbox is selected, a size must also be chosen
+         if turnbuckle and not tb_size:
+@@ -101,8 +101,8 @@ class TailDownCartForm(forms.ModelForm):
+             self.add_error('chainLength', 'Chain is selected, so chain length is required.')
+ 
+         # # Chain length should be empty when chain is not selected
+-        # if not chain and chain_length:
+-        #     self.add_error('chainLength', 'Chain length should be empty when chain is not selected.')
++        if not chain and chain_length:
++            self.add_error('chainLength', 'Chain length should be empty when chain is not selected.')
+ 
+         return cleaned_data
+     
+@@ -147,8 +147,11 @@ class TailDownOrderEditForm(forms.ModelForm):
+                 self.add_error('quantity', 'Please enter a quantity between 1 and 25.')
+ 
+         # Delivery date validation
++        # On edit: only reject a past date if the user actually changed it.
++        # This allows editing old orders (e.g. fixing a typo, updating status)
++        # without the already-passed delivery date blocking the save.
+         if deliver_by:
+-            if deliver_by < date.today():
++            if deliver_by < date.today() and deliver_by != self.instance.deliverBy:
+                 self.add_error('deliverBy', 'Delivery date cannot be in the past.')
+         else:
+             self.add_error('deliverBy', 'Please select a delivery date.')
+@@ -159,18 +162,18 @@ class TailDownOrderEditForm(forms.ModelForm):
+         else:
+             if ft is not None and ft < 0:
+                 self.add_error('cableLengthFt', 'Feet cannot be negative.')
+-            # if ft is not None and ft > 70:
+-            #     self.add_error('cableLengthFt', 'Feet cannot exceed 70.')
+-            # if inches is not None:
+-            #     if inches < 0 or inches >= 12:
+-            #         self.add_error('cableLengthIn', 'Inches must be between 0 and 11.')
++            if ft is not None and ft > 70:
++                self.add_error('cableLengthFt', 'Feet cannot exceed 70.')
++            if inches is not None:
++                if inches < 0 or inches >= 12:
++                    self.add_error('cableLengthIn', 'Inches must be between 0 and 11.')
+             if (ft == 0 or ft is None) and (inches == 0 or inches is None):
+                 self.add_error('cableLengthFt', 'Cable length cannot be zero.')
+ 
+             # Warning for long cables (70+ ft)
+-            # total_inches = (ft or 0) * 12 + (inches or 0)
+-            # if total_inches >= 840:
+-            #     self.cable_length_warning = "Cable length is 70 ft or more. Please double-check the measurement."
++            total_inches = (ft or 0) * 12 + (inches or 0)
++            if total_inches >= 840:
++                self.cable_length_warning = "Cable length is 70 ft or more. Please double-check the measurement."
+ 
+         if turnbuckle and not tb_size:
+             self.add_error('turnbuckleSize', 'Turnbuckle is selected, so size is required.')
+@@ -184,7 +187,7 @@ class TailDownOrderEditForm(forms.ModelForm):
+         if chain and not chain_length:
+             self.add_error('chainLength', 'Chain is selected, so chain length is required.')
+ 
+-        # if not chain and chain_length:
+-        #     self.add_error('chainLength', 'Chain length should be empty when chain is not selected.')
++        if not chain and chain_length:
++            self.add_error('chainLength', 'Chain length should be empty when chain is not selected.')
+ 
+         return cleaned_data
+\ No newline at end of file
+diff --git a/customer/models.py b/customer/models.py
+index e4cf952..1eba659 100644
+--- a/customer/models.py
++++ b/customer/models.py
+@@ -122,7 +122,7 @@ class TailDownCart(models.Model):
+     turnbuckleSize = models.CharField(max_length=10, verbose_name=("Turnbuckle &Size"))
+ 
+     #Chain Lenght
+-    chainLength = models.CharField(max_length=10, blank=" ")
++    chainLength = models.CharField(max_length=10, blank=True)
+ 
+     #Number of units ordered; enforced between 1 and 25 at the database and form level
+     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1),MaxValueValidator(25)]) 
+diff --git a/customer/templates/customer/model.html b/customer/templates/customer/model.html
+index a668bfa..21c4169 100644
+--- a/customer/templates/customer/model.html
++++ b/customer/templates/customer/model.html
+@@ -193,6 +193,40 @@
+                 </div>
+             </div>
+ 
++            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
++                <div>
++                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Top</label>
++                    <select name="topType" id="edit_topType"
++                            class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none">
++                        <option value="Soft Eye">Soft Eye</option>
++                        <option value="Hard Eye">Hard Eye</option>
++                        <option value="None">None</option>
++                    </select>
++                </div>
++                <div>
++                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">End Fitting</label>
++                    <select name="endType" id="edit_endType"
++                            class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none">
++                            <option value="Nico">Nico</option>
++                            <option value="Crosby">Crosby</option>
++                            <option value="None">None</option>
++                    </select>
++                </div>
++            </div>
++
++            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
++                <div>
++                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cable Length (Ft)</label>
++                    <input type="number" name="cableLengthFt" id="edit_cableLengthFt" min="0"
++                        class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none">
++                </div>
++                <div>
++                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cable Length (In)</label>
++                    <input type="number" name="cableLengthIn" id="edit_cableLengthIn" min="0" max="11"
++                        class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none">
++                </div>
++            </div>
++
+             <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-4">
+                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Hardware Requirements</label>
+                 <div class="flex gap-6">
+diff --git a/customer/tests.py b/customer/tests.py
+index 7ce503c..1e4388a 100644
+--- a/customer/tests.py
++++ b/customer/tests.py
+@@ -1,3 +1,516 @@
+-from django.test import TestCase
++"""
++Test suite for TailDown customer app.
+ 
+-# Create your tests here.
++Covers:
++- 3 user groups (Customer, Staff, Manager) with distinct permissions
++- Order CRUD (create via cart, edit, delete)
++- Cross-user access denial
++- Dashboard filtering by permission
++- The deliverBy past-date edit persistence bug
++- AJAX endpoints (order_edit_data, order_detail_data, OrderDeleteView, filterOrders)
++- Cart add/delete/checkout flow
++
++Run with:  python manage.py test customer
++"""
++from datetime import date, timedelta
++import json
++
++from django.test import TestCase, Client, override_settings
++from django.urls import reverse
++from django.contrib.auth import get_user_model
++from django.contrib.auth.models import Group, Permission
++from django.contrib.contenttypes.models import ContentType
++
++from account.models import JobDetails
++from customer.models import TailDownOrder, TailDownCart
++
++User = get_user_model()
++
++
++# Disable django-axes during tests so repeated logins don't get locked out.
++@override_settings(AXES_ENABLED=False)
++class TailDownBaseTestCase(TestCase):
++    """
++    Base class that sets up:

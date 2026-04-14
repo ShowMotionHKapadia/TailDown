@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+.gitattributes
+.env
+db.sqlite3
+tailwindcss.exe
+node_modules/
+*.log
+.vscode/
+.idea/
+static/src/

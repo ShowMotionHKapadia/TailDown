@@ -17,6 +17,7 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views import View
 from datetime import date, timedelta
+from django.urls import reverse
 import holidays
 
 from account.models import JobDetails
@@ -206,7 +207,7 @@ def customer_order_cart(request):
                         turnbuckleSize=item.turnbuckleSize,
                         chainLength=item.chainLength,
                         quantity=item.quantity,
-                        status="Placed"
+                        status="Ordered"
                     )
                     
                     # 2. Mark the cart item as ordered
@@ -392,6 +393,7 @@ def filterOrders(request):
             'deliverBy': order.deliverBy.strftime('%m/%d/%Y') if order.deliverBy else 'N/A',
             'quantity': order.quantity,
             'status': order.status,
+            'printUrl': reverse('print_order', args=[order.orderId])
         })
 
     return JsonResponse({
@@ -477,7 +479,7 @@ def password_change_view(request):
     return render(request, 'customer/password_change.html', {'form': form})
 
 #Print order details in PDF format
-never_cache
+@never_cache
 @login_required
 @permission_required('customer.view_taildownorder', raise_exception=True)
 def print_taildown_order(request, order_uuid):
