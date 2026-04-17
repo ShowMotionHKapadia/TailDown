@@ -31,6 +31,7 @@ jobs:
      - name: Run tests
        run: |
           python manage.py test
+          python manage.py test customer -v 2
        env:
           DEBUG: ${{ secrets.DEBUG }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
