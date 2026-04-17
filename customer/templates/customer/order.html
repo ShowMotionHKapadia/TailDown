@@ -17,10 +17,42 @@
             <div class="flex-1 lg:overflow-y-auto p-6 md:p-10 space-y-12 slim-scroll">
                 
                 <!-- Row 1: Order Name / Deliver By / Quantity -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-8">
                     
-                    <div class="space-y-3">
-                        <label for="{{orderName.id}}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Order Name</label>
+                    <div class="space-y-2">
+                        <label for="{{ showName.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Select Show</label>
+                        <div class="relative">
+                            <select id="{{ showName.id }}" name="{{ showName.name }}" required 
+                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
+                                <option value="" disabled selected>Choose a show</option>
+                                {% for job in showName.options %}
+                                    <option value="{{ job.key }}" {% if showName.selected == job.key|stringformat:"s" %}selected{% endif %}>{{ job.value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="space-y-2">
+                        <label for="{{deliverBy.id}}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Deliver By</label>
+                        <div class="relative">
+                            <input type="{{deliverBy.type}}" id="{{deliverBy.id}}" name="{{deliverBy.name}}" 
+                                value="{{deliverBy.defaultValue}}" min="{{deliverBy.minDate}}" required 
+                                class="block w-full bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 shadow-sm transition-all hover:border-slate-200 cursor-pointer" />
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-slate-100" />
+
+                <!-- Row 2: Show / Finishes / Size -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-8">
+                    
+                    <div class="space-y-2">
+                        <label for="{{orderName.id}}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">TailDown Name</label>
                         <div class="relative">
                             <input type="{{orderName.type}}" id="{{orderName.id}}" name="{{orderName.name}}" 
                                 value="TailDown No 1" required 
@@ -29,16 +61,39 @@
                         </div>
                     </div>
 
-                    <div class="space-y-3">
-                        <label for="{{deliverBy.id}}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Deliver By</label>
+                    <div class="space-y-2">
+                        <label for="{{ cableFinishes.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Cable Finishes</label>
                         <div class="relative">
-                            <input type="{{deliverBy.type}}" id="{{deliverBy.id}}" name="{{deliverBy.name}}" 
-                                value="{{deliverBy.defaultValue}}" min="{{deliverBy.minDate}}" required 
-                                class="block w-full bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 shadow-sm transition-all hover:border-slate-200 cursor-pointer" />
+                            <select id="{{ cableFinishes.id }}" name="{{ cableFinishes.name }}" required 
+                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
+                                <option value="" disabled {% if not cableFinishes.selected %}selected{% endif %}>Choose finish</option>
+                                {% for option in cableFinishes.options %}
+                                    <option value="{{ option.key }}" {% if cableFinishes.selected == option.key %}selected{% endif %} >{{ option.value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="space-y-3">
+                    <div class="space-y-2">
+                        <label for="{{ cableSize.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Cable Size</label>
+                        <div class="relative">
+                            <select id="{{ cableSize.id }}" name="{{ cableSize.name }}" required 
+                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
+                                <option value="" disabled {% if not cableSize.selected %}selected{% endif %}>Choose size</option>
+                                {% for option in cableSize.options %}
+                                    <option value="{{ option.key }}" {% if cableSize.selected == option.key %}selected{% endif %}>{{ option.value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
                         <label for="{{orderQuantity.id}}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Quantity</label>
                         <div class="relative">
                             <input type="{{orderQuantity.type}}" id="{{orderQuantity.id}}" name="{{orderQuantity.name}}" 
@@ -46,60 +101,7 @@
                                 class="block w-full bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 shadow-sm transition-all hover:border-slate-200" />
                         </div>
                     </div>
-                </div>
 
-                <hr class="border-slate-100" />
-
-                <!-- Row 2: Show / Finishes / Size -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-8">
-                    
-                    <div class="space-y-3">
-                        <label for="{{ showName.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Select Show</label>
-                        <div class="relative">
-                            <select id="{{ showName.id }}" name="{{ showName.name }}" required 
-                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
-                                <option value="" disabled selected>Choose a show</option>
-                                {% for job in showName.options %}
-                                    <option value="{{ job.key }}">{{ job.value }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                                <i class="fa-solid fa-chevron-down text-xs"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3">
-                        <label for="{{ cableFinishes.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Cable Finishes</label>
-                        <div class="relative">
-                            <select id="{{ cableFinishes.id }}" name="{{ cableFinishes.name }}" required 
-                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
-                                <option value="" disabled selected>Choose finish</option>
-                                {% for option in cableFinishes.options %}
-                                    <option value="{{ option.key }}">{{ option.value }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                                <i class="fa-solid fa-chevron-down text-xs"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3">
-                        <label for="{{ cableSize.id }}" class="block text-sm font-bold text-slate-700 uppercase tracking-wider">Cable Size</label>
-                        <div class="relative">
-                            <select id="{{ cableSize.id }}" name="{{ cableSize.name }}" required 
-                                class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
-                                <option value="" disabled selected>Choose size</option>
-                                {% for option in cableSize.options %}
-                                    <option value="{{ option.key }}">{{ option.value }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                                <i class="fa-solid fa-chevron-down text-xs"></i>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Measurements -->
@@ -136,7 +138,7 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
                         {% for data in top %}
                             <label class="relative cursor-pointer group">
-                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" required class="peer sr-only">
+                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" {% if data.checked %}checked{% endif %} required class="peer sr-only">
                                 <div class="aspect-square flex flex-col items-center justify-center p-4 md:p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all duration-300 
                                             peer-checked:border-emerald-500 peer-checked:bg-emerald-50/30 peer-checked:shadow-md peer-checked:shadow-emerald-100/50
                                             group-hover:border-slate-200 group-hover:shadow-lg group-hover:-translate-y-1">
@@ -158,7 +160,7 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
                         {% for data in end %}
                             <label class="relative cursor-pointer group">
-                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" required class="peer sr-only">
+                                <input type="{{ data.type }}" name="{{ data.name }}" value="{{ data.value }}" {% if data.checked %}checked{% endif %} required class="peer sr-only">
                                 <div class="aspect-square flex flex-col items-center justify-center p-4 md:p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all duration-300 
                                             peer-checked:border-emerald-500 peer-checked:bg-emerald-50/30 peer-checked:shadow-md peer-checked:shadow-emerald-100/50
                                             group-hover:border-slate-200 group-hover:shadow-lg group-hover:-translate-y-1">
@@ -180,7 +182,7 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
                         {% for data in chkTC %}
                             <label class="relative cursor-pointer group">
-                                <input type="checkbox" name="{{ data.name }}" id="{{ data.name }}" value="{{ data.value }}" class="peer sr-only">
+                                <input type="checkbox" name="{{ data.name }}" id="{{ data.name }}" value="{{ data.value }}" {% if data.checked %}checked{% endif %} class="peer sr-only">
                                 <div class="aspect-square flex flex-col items-center justify-center p-4 md:p-6 border-2 border-slate-100 rounded-2xl bg-white transition-all duration-300 
                                             peer-checked:border-emerald-500 peer-checked:bg-emerald-50/30 peer-checked:shadow-md peer-checked:shadow-emerald-100/50
                                             group-hover:border-slate-200 group-hover:shadow-lg group-hover:-translate-y-1">
@@ -203,9 +205,9 @@
                         <div class="relative">
                             <select id="{{ orderTC.id }}" name="{{ orderTC.name }}" required 
                                 class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
-                                <option value="" disabled selected>Choose option</option>
+                                <option value="" disabled {% if not orderTC.selected %}selected{% endif %}>Choose option</option>
                                 {% for option in orderTC.options %}
-                                    <option value="{{ option.key }}">{{ option.value }}</option>
+                                    <option value="{{ option.key }}" {% if orderTC.selected == option.key %}selected{% endif %} >{{ option.value }}</option>
                                 {% endfor %}
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
@@ -219,9 +221,9 @@
                         <div class="relative">
                             <select id="{{ tbSize.id }}" name="{{ tbSize.name }}" required 
                                 class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
-                                <option value="" disabled selected>Choose size</option>
+                                <option value="" disabled {% if not tbSize.selected %}selected{% endif %}>Choose size</option>
                                 {% for option in tbSize.options %}
-                                    <option value="{{ option.key }}">{{ option.value }}</option>
+                                    <option value="{{ option.key }}" {% if tbSize.selected == option.key %}selected{% endif %}>{{ option.value }}</option>
                                 {% endfor %}
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
@@ -235,9 +237,9 @@
                         <div class="relative">
                             <select id="{{ chainLength.id }}" name="{{ chainLength.name }}" required 
                                 class="block w-full appearance-none bg-white border-2 border-slate-100 text-slate-800 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 px-4 py-3.5 pr-10 shadow-sm transition-all hover:border-slate-200 cursor-pointer">
-                                <option value="" disabled selected>Choose length</option>
+                                <option value="" disabled {% if not chainLength.selected %}selected{% endif %}>Choose length</option>
                                 {% for option in chainLength.options %}
-                                    <option value="{{ option.key }}">{{ option.value }}</option>
+                                    <option value="{{ option.key }}" {% if chainLength.selected == option.key %}selected{% endif %}>{{ option.value }}</option>
                                 {% endfor %}
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">

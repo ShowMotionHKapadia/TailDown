@@ -64,11 +64,15 @@ def calDeliveryDate():
 @csrf_protect
 @permission_required('customer.add_taildowncart', raise_exception=True)
 def customer_order(request):
-    """
-    Handles the tail-down order form.
-    - POST: validates and saves the order, attaching it to the logged-in user.
-    - GET:  renders a blank order form with all dropdown/radio/checkbox options.
-    """
+    # Everything EXCEPT orderName, quantity, cableLengthFt, cableLengthIn
+    RETAIN_FIELDS = [
+        'showName', 'deliverBy', 'cableFinishes', 'cableSize',
+        'topType', 'endType', 'turnbuckle', 'chain',
+        'tcOrder', 'turnbuckleSize', 'chainLength',
+    ]
+
+    retained = {}
+
     if request.method == "POST":
         form = TailDownCartForm(request.POST)
 
@@ -80,94 +84,102 @@ def customer_order(request):
             warning = getattr(form, 'cable_length_warning', None)
             if warning:
                 messages.warning(request, warning)
-
             messages.success(request, "Order Added to the Cart successfully!")
+
+            # Stash the selections we want to survive the redirect
+            request.session['taildown_retained'] = {
+                k: request.POST.get(k) for k in RETAIN_FIELDS
+                if request.POST.get(k) not in (None, '')
+            }
             return redirect('customer_order')
         else:
-            #Surface each field-level validation error as a flash message
+            # Form was invalid — keep ALL user input, including the per-item fields
+            retained = {k: request.POST.get(k, '') for k in RETAIN_FIELDS}
             for field, error_list in form.errors.items():
                 for error in error_list:
-                    # Use the human-readable field label when available
                     field_label = form.fields[field].label if field in form.fields else field
                     messages.error(request, f"{field_label}: {error}")
-        
     else:
-        form = TailDownCartForm() # Blank form for a fresh GET request
+        # Successful-POST redirect landed here — pull stashed values once
+        retained = request.session.pop('taildown_retained', {}) or {}
+        form = TailDownCartForm(initial=retained) if retained else TailDownCartForm()
 
-    #Fetch all jobs for the Show Name dropdown
     showNames_qs = JobDetails.objects.all()
 
-    #Build the template context manually so the template can render
-    #each input generically without hard-coding field types in HTML.
     context = {
         "form": form,
 
-        #Plain text input for the order name
-        "orderName":{'type':'text', 'id':'orderNameId', 'name':'orderName'},
+        "orderName":     {'type':'text',   'id':'orderNameId',     'name':'orderName'},
+        "cableLengthFt": {'type':'number', 'id':'cableLengthFtId', 'name':'cableLengthFt'},
+        "cableLengthIn": {'type':'number', 'id':'cableLengthInId', 'name':'cableLengthIn'},
+        "orderQuantity": {'type':'number', 'id':'orderQuantityId', 'name':'quantity'},
 
-        # Datepicker for tail down delivery 
-        "deliverBy":{'type':'Date', 'id':'deliverById', 'name':'deliverBy', 'defaultValue':calDeliveryDate(), 'minDate': date.today().strftime('%Y-%m-%d') },
+        "deliverBy": {
+            'type':'Date', 'id':'deliverById', 'name':'deliverBy',
+            'defaultValue': retained.get('deliverBy') or calDeliveryDate(),
+            'minDate': date.today().strftime('%Y-%m-%d'),
+        },
 
-        # Cable length 
-        "cableLengthFt": {'type': 'number', 'id': 'cableLengthFtId', 'name': 'cableLengthFt'},
-        "cableLengthIn": {'type': 'number', 'id': 'cableLengthInId', 'name': 'cableLengthIn'},
-
-        #Numeric input for how many units to order
-        "orderQuantity":{'type':'number', 'id':'orderQuantityId', 'name':'quantity'},
-
-        #Show name dropdown — options are built from live JobDetails records
         "showName": {
-            'type': 'select', 'id': 'showNameId', 'name': 'showName', 
-            'options': [{'key': obj.jobId, 'value': obj.showName} for obj in showNames_qs]
+            'type': 'select', 'id': 'showNameId', 'name': 'showName',
+            'selected': retained.get('showName'),
+            'options': [{'key': obj.jobId, 'value': obj.showName} for obj in showNames_qs],
         },
-
-        #Cable finish options (Galvanized / Blackened)
         "cableFinishes": {
-            'type': 'select', 'id': 'cableFinishesId', 'name': 'cableFinishes', 
-            'options': [{'key': 'GAL', 'value': 'Galvanized'}, {'key': 'BLK', 'value': 'Blackened'}]
+            'type': 'select', 'id': 'cableFinishesId', 'name': 'cableFinishes',
+            'selected': retained.get('cableFinishes'),
+            'options': [{'key': 'GAL', 'value': 'Galvanized'}, {'key': 'BLK', 'value': 'Blackened'}],
         },
-
-        #Standard cable diameter sizes
         "cableSize": {
-            'type': 'select', 'id': 'cableSizeId', 'name': 'cableSize', 
-            'options': [{'key': '1/4"', 'value': '1/4"'}, {'key': '1/8"', 'value': '1/8"'}, {'key': '1/16"', 'value': '1/16"'}, {'key': '3/8"',  'value': '3/8"'}, {'key': '3/16"', 'value': '3/16"'}, {'key': '5/16"', 'value': '5/16"'},] 
+            'type': 'select', 'id': 'cableSizeId', 'name': 'cableSize',
+            'selected': retained.get('cableSize'),
+            'options': [{'key': '1/4"', 'value': '1/4"'}, {'key': '1/8"', 'value': '1/8"'},
+                        {'key': '1/16"', 'value': '1/16"'}, {'key': '3/8"', 'value': '3/8"'},
+                        {'key': '3/16"', 'value': '3/16"'}, {'key': '5/16"', 'value': '5/16"'}],
         },
 
-        #Radio buttons for selecting the top fitting type; each carries an illustration
         "top": [
-            {'type': 'radio', 'name': 'topType', 'value': 'Soft Eye', 'image': "images/softEye.JPG"}, 
-            {'type': 'radio', 'name': 'topType', 'value': 'Hard Eye', 'image': "images/hardeye.JPG"},
-            {'type': 'radio', 'name': 'topType', 'value': 'None',  'image': "images/official_special_lowres.gif"}
+            {'type':'radio','name':'topType','value':'Soft Eye','image':"images/softEye.JPG",
+             'checked': retained.get('topType') == 'Soft Eye'},
+            {'type':'radio','name':'topType','value':'Hard Eye','image':"images/hardeye.JPG",
+             'checked': retained.get('topType') == 'Hard Eye'},
+            {'type':'radio','name':'topType','value':'None','image':"images/official_special_lowres.gif",
+             'checked': retained.get('topType') == 'None'},
         ],
-
-        #Radio buttons for selecting the end fitting type
         "end": [
-            {'type': 'radio', 'name': 'endType', 'value': 'Nico', 'image': "images/nico.JPG"}, 
-            {'type': 'radio', 'name': 'endType', 'value': 'Crosby', 'image': "images/crosby.JPG"},
-            {'type': 'radio', 'name': 'endType', 'value': 'None' ,  'image': "images/official_special_lowres.gif"}
+            {'type':'radio','name':'endType','value':'Nico','image':"images/nico.JPG",
+             'checked': retained.get('endType') == 'Nico'},
+            {'type':'radio','name':'endType','value':'Crosby','image':"images/crosby.JPG",
+             'checked': retained.get('endType') == 'Crosby'},
+            {'type':'radio','name':'endType','value':'None','image':"images/official_special_lowres.gif",
+             'checked': retained.get('endType') == 'None'},
         ],
 
-        #Checkboxes for optional hardware add-ons (turnbuckle and/or chain)
         "chkTC": [
-            {'type': 'checkbox', 'name': 'turnbuckle', 'value': 'Turnbuckle', 'image': "images/Turnbuckle.svg"},
-            {'type': 'checkbox', 'name': 'chain', 'value': 'Chain', 'image': "images/Chain.svg"},
+            {'type':'checkbox','name':'turnbuckle','value':'Turnbuckle','image':"images/Turnbuckle.svg",
+             'checked': bool(retained.get('turnbuckle'))},
+            {'type':'checkbox','name':'chain','value':'Chain','image':"images/Chain.svg",
+             'checked': bool(retained.get('chain'))},
         ],
 
-        #Dropdown controlling the assembly order of the selected hardware
         "orderTC": {
-            'type': 'select', 'id': 'orderId', 'name': 'tcOrder', 
-            'options': [{'key': 'OT', 'value': 'Only Turnbuckle'}, {'key': 'OC',   'value': 'Only Chain'}, {'key': 'TC',   'value': 'Turnbuckle then Chain'}, {'key': 'CT',   'value': 'Chain then Turnbuckle'}, {'key': 'none', 'value': 'None'}]
+            'type': 'select', 'id': 'orderId', 'name': 'tcOrder',
+            'selected': retained.get('tcOrder'),
+            'options': [{'key':'OT','value':'Only Turnbuckle'},{'key':'OC','value':'Only Chain'},
+                        {'key':'TC','value':'Turnbuckle then Chain'},{'key':'CT','value':'Chain then Turnbuckle'},
+                        {'key':'none','value':'None'}],
         },
-
-        #Turnbuckle size dropdown — only relevant when the turnbuckle checkbox is ticked
         "tbSize": {
             'type': 'select', 'id': 'tbSizeId', 'name': 'turnbuckleSize',
-            'options': [{'key': '3/8"X6"', 'value': '3/8" X 6"'}, {'key': '1/2"X6"', 'value': '1/2" X 6"'}, {'key': '1/2"X9"', 'value': '1/2" X 9"'}, {'key': '5/8"X6"', 'value': '5/8" X 6"'}, {'key': '5/8"X9"', 'value': '5/8" X 9"'}] 
+            'selected': retained.get('turnbuckleSize'),
+            'options': [{'key':'3/8"X6"','value':'3/8" X 6"'},{'key':'1/2"X6"','value':'1/2" X 6"'},
+                        {'key':'1/2"X9"','value':'1/2" X 9"'},{'key':'5/8"X6"','value':'5/8" X 6"'},
+                        {'key':'5/8"X9"','value':'5/8" X 9"'}],
         },
-
-        "chainLength":{
+        "chainLength": {
             'type': 'select', 'id': 'chainLengthId', 'name': 'chainLength',
-            'options':[{'key': '2ft', 'value': '2 ft'},{'key': '3ft', 'value': '3 ft'},{'key': '4ft', 'value': '4 ft'}]
+            'selected': retained.get('chainLength'),
+            'options': [{'key':'2ft','value':'2 ft'},{'key':'3ft','value':'3 ft'},{'key':'4ft','value':'4 ft'}],
         },
     }
 
@@ -516,7 +528,7 @@ def print_taildown_order(request, order_uuid):
     header_data = [[logo_img,
         Paragraph(f"<b>Show:</b> {show_name}<br/><b>Name:</b> {order.orderName}", show_title_style),
         Paragraph(f"<b>Estimated Date:</b><br/>{delivery_date}", show_title_style)
-]]
+    ]]
 
     #Shrink the first column width to 1.5" to force the next column to start sooner
     #Increase the middle column to give the text room to move left
@@ -563,55 +575,161 @@ def print_taildown_order(request, order_uuid):
     elements.append(t)
     elements.append(Spacer(1, 10))
 
+    # elements.append(Paragraph("<u>ASSEMBLY INSTRUCTIONS</u>", assembly_title_style))
     elements.append(Paragraph("<u>ASSEMBLY INSTRUCTIONS</u>", assembly_title_style))
 
-    def add_assembly_item(filename, label):
-        clean_filename = filename.replace('.svg', '.JPG') 
+    # --- Helper to load an image ---
+    def get_assembly_image(filename, img_w=1.4*inch, img_h=1.4*inch):
+        clean_filename = filename.replace('.svg', '.JPG')
         path = os.path.join(settings.BASE_DIR, 'static', clean_filename)
-        
         if os.path.exists(path):
-            
             with PILImage.open(path) as pil_img:
-                width, height = pil_img.size
-               
-                if width > height:
+                w, h = pil_img.size
+                if w > h:
                     pil_img = pil_img.rotate(90, expand=True)
-                    pil_img.save(path) 
+                    pil_img.save(path)
             from reportlab.platypus import Image as RLImage
-            img = RLImage(path, width=1.4*inch, height=1.4*inch, kind='proportional')
-            elements.append(img)
-            elements.append(Paragraph(label, styles['Normal']))
-            elements.append(Spacer(1, 6))
+            return RLImage(path, width=img_w, height=img_h, kind='proportional')
+        return Paragraph("No Image", styles['Normal'])
+
+    # --- Length indicator drawing ---
+    def create_length_indicator(length_text, draw_height):
+        from reportlab.graphics.shapes import Drawing, Line, Polygon, String
+
+        w = 100
+        d = Drawing(w, draw_height)
+
+        mid_x = 70
+        cap_left = 55
+        cap_right = 85
+
+        top_y = draw_height - 8
+        bot_y = 8
+
+        # Top horizontal cap
+        d.add(Line(cap_left, top_y, cap_right, top_y,
+                   strokeWidth=1, strokeColor=colors.black))
+        # Bottom horizontal cap
+        d.add(Line(cap_left, bot_y, cap_right, bot_y,
+                   strokeWidth=1, strokeColor=colors.black))
+        # Vertical line (between arrowheads)
+        d.add(Line(mid_x, top_y - 8, mid_x, bot_y + 8,
+                   strokeWidth=1, strokeColor=colors.black))
+        # Top arrowhead — pointing up
+        d.add(Polygon(
+            points=[mid_x, top_y,
+                    mid_x - 3, top_y - 8,
+                    mid_x + 3, top_y - 8],
+            fillColor=colors.black, strokeColor=colors.black))
+        # Bottom arrowhead — pointing down
+        d.add(Polygon(
+            points=[mid_x, bot_y,
+                    mid_x - 3, bot_y + 8,
+                    mid_x + 3, bot_y + 8],
+            fillColor=colors.black, strokeColor=colors.black))
+        # Length text — centered vertically
+        d.add(String(mid_x - 10, draw_height / 2 - 5, length_text,
+                     fontSize=16, fontName='Helvetica-Bold', textAnchor='end'))
+
+        return d
     
-    # 1. TOP (Always 1st)
-    if order.topType == 'Soft Eye': add_assembly_item('images/softEye.JPG', "1 - TOP: Soft Eye")
-    elif order.topType == 'Hard Eye': add_assembly_item('images/hardeye.JPG', "1 - TOP: Hard Eye")
-    # 2. END (Always 2nd)
-    if order.endType == 'Nico': add_assembly_item('images/nico.JPG', "2 - END: Nico")
-    elif order.endType == 'Crosby': add_assembly_item('images/crosby.JPG', "2 - END: Crosby")
-    # 3 & 4. Hardware Logic (Removed rotation)
+    # --- Collect parts ---
+    top_img = None
+    top_label = ""
+    end_img = None
+    end_label = ""
+    hw_parts = []
+
+    if order.topType == 'Soft Eye':
+        top_img = get_assembly_image('images/softEye.JPG')
+        top_label = "1 - TOP: Soft Eye"
+    elif order.topType == 'Hard Eye':
+        top_img = get_assembly_image('images/hardeye.JPG')
+        top_label = "1 - TOP: Hard Eye"
+
+    if order.endType == 'Nico':
+        end_img = get_assembly_image('images/nico.JPG')
+        end_label = "2 - END: Nico"
+    elif order.endType == 'Crosby':
+        end_img = get_assembly_image('images/crosby.JPG')
+        end_label = "2 - END: Crosby"
+
+    step = 3
     tc_val = order.tcOrder
-    
-    if tc_val == 'OT':
-        if order.turnbuckle:
-            add_assembly_item('images/Turnbuckle_Vertical.JPG', f"3 - Turnbuckle ({order.turnbuckleSize})")
-            
-    elif tc_val == 'OC':
-        if order.chain:
-            add_assembly_item('images/Chain.JPG', f"3 - Chain ({order.chainLength})")
-            
+
+    if tc_val == 'OT' and order.turnbuckle:
+        hw_parts.append((get_assembly_image('images/Turnbuckle_Vertical.JPG'),
+                         f"{step} - Turnbuckle ({order.turnbuckleSize})"))
+    elif tc_val == 'OC' and order.chain:
+        hw_parts.append((get_assembly_image('images/Chain.JPG'),
+                         f"{step} - Chain ({order.chainLength})"))
     elif tc_val == 'TC':
         if order.turnbuckle:
-            add_assembly_item('images/Turnbuckle_Vertical.JPG', f"3 - Turnbuckle ({order.turnbuckleSize})")
+            hw_parts.append((get_assembly_image('images/Turnbuckle_Vertical.JPG'),
+                             f"{step} - Turnbuckle ({order.turnbuckleSize})"))
+            step += 1
         if order.chain:
-            add_assembly_item('images/Chain.JPG', f"4 - Chain ({order.chainLength})")
-            
+            hw_parts.append((get_assembly_image('images/Chain.JPG'),
+                             f"{step} - Chain ({order.chainLength})"))
     elif tc_val == 'CT':
         if order.chain:
-            add_assembly_item('images/Chain.JPG', f"3 - Chain ({order.chainLength})")
+            hw_parts.append((get_assembly_image('images/Chain.JPG'),
+                             f"{step} - Chain ({order.chainLength})"))
+            step += 1
         if order.turnbuckle:
-            add_assembly_item('images/Turnbuckle_Vertical.JPG', f"4 - Turnbuckle ({order.turnbuckleSize})")
-    # --- Build ---
+            hw_parts.append((get_assembly_image('images/Turnbuckle_Vertical.JPG'),
+                             f"{step} - Turnbuckle ({order.turnbuckleSize})"))
+
+    # --- Build assembly table ---
+    row_h = 1.5 * inch
+    length_text = f"{order.cableLengthFt}'{order.cableLengthIn}\""
+    indicator = create_length_indicator(length_text, row_h * 2)
+
+    label_style_asm = ParagraphStyle('AsmLabel', fontSize=11, fontName='Helvetica', leading=14)
+
+    assembly_data = []
+
+    # Row 0: indicator (spans 2 rows) + top image + top label
+    assembly_data.append([
+        indicator,
+        top_img or '',
+        Paragraph(top_label, label_style_asm)
+    ])
+
+    # Row 1: (spanned by indicator) + end image + end label
+    assembly_data.append([
+        '',
+        end_img or '',
+        Paragraph(end_label, label_style_asm)
+    ])
+
+    # Hardware rows: empty col 1 + image + label
+    for hw_img, hw_label in hw_parts:
+        assembly_data.append([
+            '',
+            hw_img,
+            Paragraph(hw_label, label_style_asm)
+        ])
+
+    asm_table = Table(
+        assembly_data,
+        colWidths=[1.3 * inch, 1.6 * inch, 3 * inch],
+        rowHeights=[row_h] * len(assembly_data)
+    )
+
+    asm_table.setStyle(TableStyle([
+        ('SPAN', (0, 0), (0, 1)),          # indicator spans Top + End rows
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('ALIGN', (1, 0), (1, -1), 'CENTER'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+
+    elements.append(asm_table)
+    
     doc.build(elements)
     pdf = buffer.getvalue()
     buffer.close()

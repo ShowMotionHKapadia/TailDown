@@ -791,17 +791,8 @@ function buildHeader(data) {
 
 function createDetailCell(label, value) {
     var $cell = $('<div>');
-
-    $('<p>')
-        .addClass('text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider font-medium mb-0.5')
-        .text(label)
-        .appendTo($cell);
-
-    $('<p>')
-        .addClass('text-sm sm:text-base lg:text-lg font-semibold text-slate-700')
-        .text(value || '—')
-        .appendTo($cell);
-
+    $('<p>').addClass('text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-0.5').text(label).appendTo($cell);
+    $('<p>').addClass('text-sm font-semibold text-black').text(value || '—').appendTo($cell);
     return $cell;
 }
 
@@ -827,12 +818,11 @@ function buildDetailsGrid(data) {
 
 /* ============================ ASSEMBLY DIAGRAM BUILDER ============================ */
 
-function createPartCard(imgSrc, label, detail, color) {
-    var $wrapper = $('<div>').addClass('flex flex-col items-center text-center w-full');
+function createPartCard(imgSrc, label, detail) {
+    var $wrapper = $('<div>').addClass('flex items-center gap-4 sm:gap-6 w-full');
 
     var $imgBox = $('<div>')
-        .addClass('relative w-28 h-32 sm:w-32 sm:h-40 lg:w-36 lg:h-44 flex items-center justify-center rounded-xl border-2 bg-white shadow-sm overflow-hidden p-3')
-        .css('border-color', getColor(color, 'border'));
+        .addClass('w-28 h-32 sm:w-32 sm:h-40 lg:w-36 lg:h-44 flex items-center justify-center flex-shrink-0 p-3 bg-white');
 
     if (imgSrc) {
         $('<img>')
@@ -846,17 +836,16 @@ function createPartCard(imgSrc, label, detail, color) {
             .appendTo($imgBox);
     }
 
-    var $textGroup = $('<div>').addClass('mt-2 sm:mt-3 px-2');
+    var $textGroup = $('<div>').addClass('flex flex-col');
 
     $('<p>')
-        .addClass('text-sm sm:text-base lg:text-lg font-bold leading-tight')
-        .css('color', getColor(color, 'text'))
+        .addClass('text-sm sm:text-base lg:text-lg font-bold text-black leading-tight')
         .text(label)
         .appendTo($textGroup);
 
     if (detail) {
         $('<p>')
-            .addClass('text-xs sm:text-sm lg:text-base text-slate-400 mt-0.5 font-medium')
+            .addClass('text-xs sm:text-sm lg:text-base text-black mt-0.5 font-medium')
             .text(detail)
             .appendTo($textGroup);
     }
@@ -874,41 +863,68 @@ function createConnector() {
 function getHardwareParts(data) {
     var parts = [];
     if (data.tcOrder === 'TC' && data.hasTb && data.hasCh) {
-        parts.push({ img: IMG.TURNBUCKLE, label: 'Turnbuckle', detail: data.tbSize, color: 'amber' });
-        parts.push({ img: IMG.CHAIN, label: 'Chain', detail: data.chainLen, color: 'orange' });
+        parts.push({ img: IMG.TURNBUCKLE, label: 'Turnbuckle', detail: data.tbSize });
+        parts.push({ img: IMG.CHAIN,      label: 'Chain',      detail: data.chainLen });
     } else if (data.tcOrder === 'CT' && data.hasTb && data.hasCh) {
-        parts.push({ img: IMG.CHAIN, label: 'Chain', detail: data.chainLen, color: 'orange' });
-        parts.push({ img: IMG.TURNBUCKLE, label: 'Turnbuckle', detail: data.tbSize, color: 'amber' });
+        parts.push({ img: IMG.CHAIN,      label: 'Chain',      detail: data.chainLen });
+        parts.push({ img: IMG.TURNBUCKLE, label: 'Turnbuckle', detail: data.tbSize });
     } else if (data.hasTb) {
-        parts.push({ img: IMG.TURNBUCKLE, label: 'Turnbuckle', detail: data.tbSize, color: 'amber' });
+        parts.push({ img: IMG.TURNBUCKLE, label: 'Turnbuckle', detail: data.tbSize });
     } else if (data.hasCh) {
-        parts.push({ img: IMG.CHAIN, label: 'Chain', detail: data.chainLen, color: 'orange' });
+        parts.push({ img: IMG.CHAIN,      label: 'Chain',      detail: data.chainLen });
     }
     return parts;
 }
 
 function buildAssemblyDiagram(data) {
-    var $container = $('#assemblyDiagram').empty();
+    var $container = $('#assemblyDiagram').empty().addClass('w-full');
 
-    var parts = [];
+    // 2-column grid: col 1 = length indicator (spans Top+End only), col 2 = all parts stacked
+    var $grid = $('<div>').addClass('grid mx-auto').css({
+        'grid-template-columns': '80px auto',
+        'column-gap': '24px',
+        'row-gap': '12px',
+        'width': 'fit-content'
+    });
 
-    // 1. Top (always)
-    parts.push({ img: getTopImg(data.topType), label: 'Top: ' + (data.topType || 'None'), detail: null, color: 'emerald' });
-
-    // 2. End (always)
-    parts.push({ img: getEndImg(data.endType), label: 'End: ' + (data.endType || 'None'), detail: null, color: 'slate' });
-
-    // 3. Hardware (conditional, validated)
     var hw = getHardwareParts(data);
-    for (var j = 0; j < hw.length; j++) { parts.push(hw[j]); }
 
-    // Render
+    // --- Length indicator: col 1, rows 1-2 only ---
+    var $indicator = $('<div>')
+        .addClass('flex items-center justify-end gap-2')
+        .css({ 'grid-column': '1', 'grid-row': '1 / span 2' });
+
+    $('<div>')
+        .addClass('font-bold text-base sm:text-lg text-black whitespace-nowrap')
+        .text(data.cableLength + ' L')
+        .appendTo($indicator);
+
+    var svgStr =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 100" preserveAspectRatio="none" class="w-3 self-stretch" style="height:92%">' +
+        '<line x1="0" y1="1"  x2="16" y2="1"  stroke="black" stroke-width="1" vector-effect="non-scaling-stroke"/>' +
+        '<line x1="0" y1="99" x2="16" y2="99" stroke="black" stroke-width="1" vector-effect="non-scaling-stroke"/>' +
+        '<line x1="8" y1="3"  x2="8"  y2="97" stroke="black" stroke-width="1" vector-effect="non-scaling-stroke"/>' +
+        '<polygon points="8,1 5,8 11,8" fill="black"/>' +
+        '<polygon points="8,99 5,92 11,92" fill="black"/>' +
+    '</svg>';
+    $indicator.append(svgStr);
+
+    $grid.append($indicator);
+
+    // --- All parts in col 2, one per row ---
+    var parts = [
+        { img: getTopImg(data.topType), label: 'Top: ' + (data.topType || 'None'), detail: null },
+        { img: getEndImg(data.endType), label: 'End: ' + (data.endType || 'None'), detail: null }
+    ];
+    for (var j = 0; j < hw.length; j++) parts.push(hw[j]);
+
     for (var i = 0; i < parts.length; i++) {
-        $container.append(createPartCard(parts[i].img, parts[i].label, parts[i].detail || null, parts[i].color));
-        if (i < parts.length - 1) {
-            $container.append(createConnector());
-        }
+        var $row = $('<div>').css({ 'grid-column': '2', 'grid-row': (i + 1) });
+        $row.append(createPartCard(parts[i].img, parts[i].label, parts[i].detail || null));
+        $grid.append($row);
     }
+
+    $container.append($grid);
 }
 
 /* ============================ MODAL CONTROLLER ============================ */
@@ -986,14 +1002,6 @@ $(document).ready(function() {
             $('#edit_turnbuckleSize').closest('.edit-field-group').show();
         } else {
             $('#edit_turnbuckleSize').closest('.edit-field-group').hide().find('select').val('');
-        }
-    });
-
-    $('#editModal').on('change', '#edit_chain', function() {
-        if ($(this).is(':checked')) {
-            $('#edit_chainLength_group').show();
-        } else {
-            $('#edit_chainLength_group').hide().find('select').val('');
         }
     });
 
