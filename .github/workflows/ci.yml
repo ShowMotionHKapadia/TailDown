@@ -31,7 +31,7 @@ jobs:
      - name: Run tests
        run: |
           python manage.py test
-        env:
+       env:
           DEBUG: ${{ secrets.DEBUG }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           EBACKEND: ${{ secrets.EBACKEND }}
