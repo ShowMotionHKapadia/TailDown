@@ -32,20 +32,20 @@ jobs:
        run: |
           python manage.py test
         env:
-          DEBUG: ${{secrets.DEBUG}}
-          SECRET_KEY: ${{secrets.SECRET_KEY}}
-          EBACKEND: ${{secrets.EBACKEND}}
-          EHOST: ${{secrets.EHOST}}
-          EHOSTUSER: ${{secrets.EHOSTUSER}}
-          EHOSTPASSWORD: ${{secrets.EHOSTPASSWORD}}
-          EPORT: ${{secrets.EPORT}}
-          EUSETLS: ${{secrets.EUSETLS}}
-          EUSESSL: ${{secrets.EUSESSL}}
-          SECURE_SSL_REDIRECT: ${{secrets.SECURE_SSL_REDIRECT}}
-          SESSION_COOKIE_SECURE: ${{secrets.SESSION_COOKIE_SECURE}}
-          CSRF_COOKIE_SECURE: ${{secrets.CSRF_COOKIE_SECURE}}
-          SECURE_HSTS_INCLUDE_SUBDOMAINS: ${{secrets.SECURE_HSTS_INCLUDE_SUBDOMAINS}}
-          SECURE_HSTS_PRELOAD: ${{secrets.SECURE_HSTS_PRELOAD}
+          DEBUG: ${{ secrets.DEBUG }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          EBACKEND: ${{ secrets.EBACKEND }}
+          EHOST: ${{ secrets.EHOST }}
+          EHOSTUSER: ${{ secrets.EHOSTUSER }}
+          EHOSTPASSWORD: ${{ secrets.EHOSTPASSWORD }}
+          EPORT: ${{ secrets.EPORT }}
+          EUSETLS: ${{ secrets.EUSETLS }}
+          EUSESSL: ${{ secrets.EUSESSL }}
+          SECURE_SSL_REDIRECT: ${{ secrets.SECURE_SSL_REDIRECT }}
+          SESSION_COOKIE_SECURE: ${{ secrets.SESSION_COOKIE_SECURE }}
+          CSRF_COOKIE_SECURE: ${{ secrets.CSRF_COOKIE_SECURE }}
+          SECURE_HSTS_INCLUDE_SUBDOMAINS: ${{ secrets.SECURE_HSTS_INCLUDE_SUBDOMAINS }}
+          SECURE_HSTS_PRELOAD: ${{ secrets.SECURE_HSTS_PRELOAD }}
 
 
 
