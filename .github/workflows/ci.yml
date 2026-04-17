@@ -13,7 +13,7 @@ jobs:
      # Step 1: Pull code into the machine
     steps:
      - name: Checkout code
-       uses: actions/checkout@v4
+       uses: actions/checkout@v5
     
       # Step 2: Install Python
      - name: Setup python
